@@ -62,6 +62,10 @@ async def company_dashboard(
             {"marca": b["descripcion_grupo"], "venta": b["venta"], "participacion": b["participacion_pct"]}
             for b in metrics.get_sales_by_brand(df)[:8]
         ],
+        "ventas_diarias": [
+            {"fecha": d["fecha"], "venta": d["venta"]}
+            for d in metrics.get_sales_by_day(df)
+        ],
     }
 
 
