@@ -105,9 +105,9 @@ function AsesoresTable({ data }: { data: any[] }) {
           className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-accent w-36"
         />
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-auto max-h-72 scrollbar-thin">
         <table className="w-full text-xs">
-          <thead>
+          <thead className="sticky top-0 bg-white z-10">
             <tr className="border-b border-gray-100 text-gray-400 uppercase tracking-wide">
               <th className="text-left py-2 pr-2 font-semibold w-6">#</th>
               <th className="text-left py-2 pr-2 font-semibold">Asesor</th>

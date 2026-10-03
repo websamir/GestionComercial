@@ -287,9 +287,9 @@ function TopAsesores({ data, title = 'Top Asesores por Venta', accentColor = '#2
         </div>
       </div>
 
-      <div className="overflow-x-auto flex-1">
+      <div className="overflow-auto max-h-72 scrollbar-thin flex-1">
         <table className="w-full text-xs">
-          <thead>
+          <thead className="sticky top-0 bg-white z-10">
             <tr className="border-b border-gray-100 text-gray-400 uppercase tracking-wide">
               <th className="text-left py-2 pr-2 font-semibold w-6">#</th>
               <th className="text-left py-2 pr-2 font-semibold">Asesor</th>
