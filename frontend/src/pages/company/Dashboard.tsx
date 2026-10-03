@@ -532,12 +532,6 @@ export default function CompanyDashboard() {
               value={(kpis?.items_factura ?? 0).toFixed(2)}
               subtitle="Promedio de ítems"
             />
-            <NewKPICard
-              iconKey="items" title="Ítems por Factura"
-              value={(kpis?.items_factura ?? 0).toFixed(2)}
-              trend={trend(kpis?.items_factura ?? 0, pk?.items_factura)}
-              subtitle="vs. mes anterior"
-            />
           </div>
 
           {/* ── Charts row ── */}

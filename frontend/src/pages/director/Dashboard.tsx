@@ -250,8 +250,6 @@ export default function DirectorDashboard() {
             <NewKPICard iconKey="ticketitem" title="Ítems / Ticket"
               value={(kpis?.items_factura ?? 0).toFixed(2)}
               subtitle="Promedio de ítems" />
-            <NewKPICard iconKey="items"    title="Ticket Ítems"   value={(kpis?.items_factura ?? 0).toFixed(1)}
-              subtitle="Ítems / factura" />
             <NewKPICard iconKey="unidades" title="Unidades"       value={String(kpis?.unidades ?? 0)} />
           </div>
 
