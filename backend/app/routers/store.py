@@ -2,7 +2,9 @@
 /api/store/* — DIRECTOR dashboard endpoints.
 Scope: all vendors in the authenticated director's desc_area.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import date
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from app.auth import get_current_user, require_roles
 from app.models import Usuario
 from app.excel_engine import get_engine
@@ -25,11 +27,24 @@ def _get_store_df(current_user: Usuario):
     return engine.get_df()
 
 
+def _apply_date_filter(df, fecha_inicio: Optional[date], fecha_fin: Optional[date]):
+    if "fecha_hora" not in df.columns:
+        return df
+    if fecha_inicio:
+        df = df[df["fecha_hora"].dt.date >= fecha_inicio]
+    if fecha_fin:
+        df = df[df["fecha_hora"].dt.date <= fecha_fin]
+    return df
+
+
 @router.get("/dashboard")
 async def store_dashboard(
     current_user: Usuario = Depends(require_roles(*ALLOWED_ROLES)),
+    fecha_inicio: Optional[date] = Query(None),
+    fecha_fin: Optional[date] = Query(None),
 ):
     df = _get_store_df(current_user)
+    df = _apply_date_filter(df, fecha_inicio, fecha_fin)
     summary = metrics.get_sales_summary(df)
     productivity = metrics.get_daily_productivity(df)
     return {

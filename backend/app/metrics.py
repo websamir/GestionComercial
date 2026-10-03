@@ -257,6 +257,37 @@ def get_sales_by_day(df: pd.DataFrame) -> list[dict]:
     return sorted(result, key=lambda x: x["fecha"])
 
 
+def get_sales_by_day_per_channel(df: pd.DataFrame) -> dict:
+    """Daily sales grouped by channel (Tiendas, Venta Empresa, Convenios)."""
+    sdf_all = _sales_df(df)
+    if sdf_all.empty or "fecha_hora" not in sdf_all.columns:
+        return {}
+
+    # Convenios vendors
+    tipo_series = sdf_all["Descripción Tipo"].fillna("")
+    conv_vends = set(sdf_all[tipo_series.str.contains("CONVENIOS", case=False)]["cod_vend"].unique())
+
+    channels = {
+        "Tiendas": sdf_all[sdf_all["Origen"] == "VENDEDOR"],
+        "Venta Empresa": sdf_all[sdf_all["Origen"] == "CANAL"],
+        "Convenios": sdf_all[sdf_all["cod_vend"].isin(conv_vends) & tipo_series.str.contains("CONVENIOS", case=False)],
+    }
+
+    result = {}
+    for name, cdf in channels.items():
+        if cdf.empty:
+            result[name] = []
+            continue
+        cdf = cdf.dropna(subset=["fecha_hora"]).copy()
+        cdf["fecha"] = cdf["fecha_hora"].dt.date
+        grouped = cdf.groupby("fecha").agg(venta=("Valor Ventas Netas", "sum")).reset_index()
+        result[name] = sorted(
+            [{"fecha": str(r["fecha"]), "venta": round(_safe_float(r["venta"]), 2)} for _, r in grouped.iterrows()],
+            key=lambda x: x["fecha"],
+        )
+    return result
+
+
 def get_daily_productivity(df: pd.DataFrame) -> dict:
     """Daily average productivity metrics."""
     sdf = _sales_df(df)

@@ -40,8 +40,11 @@ def _apply_date_filter(df, fecha_inicio: Optional[date], fecha_fin: Optional[dat
 @router.get("/dashboard")
 async def my_dashboard(
     current_user: Usuario = Depends(require_roles(*ALLOWED_ROLES)),
+    fecha_inicio: Optional[date] = Query(None),
+    fecha_fin: Optional[date] = Query(None),
 ):
     df = _get_vendor_df(current_user)
+    df = _apply_date_filter(df, fecha_inicio, fecha_fin)
     summary = metrics.get_sales_summary(df)
     productivity = metrics.get_daily_productivity(df)
     canal = current_user.canal or "Tiendas"

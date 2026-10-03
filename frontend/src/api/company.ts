@@ -1,7 +1,7 @@
 import client from './client'
 import type { CompanyDashboardData, AdminUser, CreateUserPayload, UploadInfo } from '../types'
 
-export const getCompanyDashboard = (params?: { periodo?: string }) =>
+export const getCompanyDashboard = (params?: { periodo?: string; fecha_inicio?: string; fecha_fin?: string }) =>
   client.get<CompanyDashboardData>('/company/dashboard', { params })
 
 // Admin endpoints

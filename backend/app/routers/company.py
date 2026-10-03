@@ -2,7 +2,9 @@
 /api/company/* — Company-wide / JEFE_CANAL dashboard endpoints.
 Scope: ADMIN sees everything; JEFE_CANAL sees their canal only.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import date, timedelta
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
 from app.auth import require_roles
 from app.models import Usuario
 from app.excel_engine import get_engine
@@ -27,11 +29,29 @@ def _get_channel_df(current_user: Usuario):
     return engine.filter_by_channel(canal)
 
 
+def _filter_by_dates(df, fecha_inicio: Optional[date], fecha_fin: Optional[date]):
+    """Filter df rows by date range on fecha_hora column."""
+    import pandas as pd
+    if "fecha_hora" not in df.columns:
+        return df
+    if fecha_inicio is None and fecha_fin is None:
+        return df
+    mask = pd.Series([True] * len(df), index=df.index)
+    if fecha_inicio:
+        mask &= df["fecha_hora"].dt.date >= fecha_inicio
+    if fecha_fin:
+        mask &= df["fecha_hora"].dt.date <= fecha_fin
+    return df[mask].copy()
+
+
 @router.get("/dashboard")
 async def company_dashboard(
     current_user: Usuario = Depends(require_roles(*ALLOWED_ROLES)),
+    fecha_inicio: Optional[date] = Query(None),
+    fecha_fin: Optional[date] = Query(None),
 ):
     df = _get_channel_df(current_user)
+    df = _filter_by_dates(df, fecha_inicio, fecha_fin)
     summary = metrics.get_sales_summary(df)
     tops = metrics.get_top_advisors_by_channel(df)
     convenios = metrics.get_convenios_breakdown(df)
@@ -66,6 +86,7 @@ async def company_dashboard(
             {"fecha": d["fecha"], "venta": d["venta"]}
             for d in metrics.get_sales_by_day(df)
         ],
+        "ventas_diarias_canal": metrics.get_sales_by_day_per_channel(df),
     }
 
 

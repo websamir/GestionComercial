@@ -23,9 +23,28 @@ function getCumplColor(pct: number): 'green' | 'amber' | 'red' {
   return 'red'
 }
 
+type Rango = 'hoy' | '7d' | '15d' | '30d'
+const RANGOS: { label: string; val: Rango }[] = [
+  { label: 'Hoy',     val: 'hoy' },
+  { label: '7 días',  val: '7d' },
+  { label: '15 días', val: '15d' },
+  { label: '30 días', val: '30d' },
+]
+
+function getRangoDates(rango: Rango) {
+  const today = new Date()
+  const fmt = (d: Date) => d.toISOString().slice(0, 10)
+  const fin = fmt(today)
+  const dias = rango === 'hoy' ? 0 : rango === '7d' ? 6 : rango === '15d' ? 14 : 29
+  const inicio = new Date(today)
+  inicio.setDate(today.getDate() - dias)
+  return { fecha_inicio: fmt(inicio), fecha_fin: fin }
+}
+
 export default function AsesorDashboard() {
   const { user } = useAuthStore()
-  const [periodo, setPeriodo] = useState(getCurrentPeriodo())
+  const [periodo] = useState(getCurrentPeriodo())
+  const [rango, setRango] = useState<Rango>('30d')
   const [data, setData] = useState<AsesorDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -33,7 +52,8 @@ export default function AsesorDashboard() {
   useEffect(() => {
     setLoading(true)
     setError('')
-    getMeDashboard({ periodo })
+    const { fecha_inicio, fecha_fin } = getRangoDates(rango)
+    getMeDashboard({ fecha_inicio, fecha_fin })
       .then((res) => setData(res.data))
       .catch((err) => {
         if (err?.response?.status !== 401) {
@@ -41,7 +61,7 @@ export default function AsesorDashboard() {
         }
       })
       .finally(() => setLoading(false))
-  }, [periodo])
+  }, [rango])
 
   if (loading) return <LoadingSpinner fullScreen />
 
@@ -50,13 +70,25 @@ export default function AsesorDashboard() {
       title={data?.asesor.nombre ?? user?.nombre ?? 'Mi Dashboard'}
       subtitle={data ? `Cód. ${data.asesor.cod_vend} · ${data.asesor.tienda} · ${data.asesor.canal}` : ''}
       periodo={periodo}
-      onPeriodoChange={setPeriodo}
     >
       {error && (
         <div className="bg-red-50 border border-red-100 rounded-lg px-4 py-3 text-sm text-danger mb-4">
           {error}
         </div>
       )}
+
+      {/* Rango selector */}
+      <div className="flex justify-end mb-4">
+        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
+          {RANGOS.map(({ label, val }) => (
+            <button key={val} onClick={() => setRango(val)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors
+                ${rango === val ? 'bg-accent text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {data && (
         <div className="space-y-4">

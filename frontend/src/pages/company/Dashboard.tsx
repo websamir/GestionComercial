@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip,
+  AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts'
 import Layout from '../../components/Layout'
@@ -40,13 +40,21 @@ function getCumplColor(p: number) {
 
 // ─── mini sparkline ──────────────────────────────────────────────────────────
 
-function Sparkline({ data, color = '#2563EB' }: { data: number[]; color?: string }) {
-  const pts = data.map((v, i) => ({ i, v }))
+interface SparkPoint { v: number; label: string }
+
+function Sparkline({ data, color = '#2563EB' }: { data: SparkPoint[]; color?: string }) {
   return (
-    <ResponsiveContainer width="100%" height={40}>
-      <LineChart data={pts} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
-        <Line type="monotone" dataKey="v" stroke={color} strokeWidth={2} dot={false} />
-      </LineChart>
+    <ResponsiveContainer width="100%" height={60}>
+      <BarChart data={data} margin={{ top: 2, right: 2, bottom: 0, left: 2 }} barCategoryGap="20%">
+        <XAxis
+          dataKey="label"
+          tick={{ fontSize: 9, fill: '#94a3b8' }}
+          axisLine={false}
+          tickLine={false}
+          interval={0}
+        />
+        <Bar dataKey="v" fill={color} radius={[2, 2, 0, 0]} opacity={0.85} />
+      </BarChart>
     </ResponsiveContainer>
   )
 }
@@ -111,7 +119,7 @@ const CANAL_COLORS: Record<string, { line: string; bg: string; dot: string }> = 
 }
 
 function CanalCard({ canal, venta, cumplimiento, margen_pct, spark }: {
-  canal: string; venta: number; cumplimiento: number; margen_pct: number; spark: number[]
+  canal: string; venta: number; cumplimiento: number; margen_pct: number; spark: SparkPoint[]
 }) {
   const c = CANAL_COLORS[canal] ?? { line: '#64748B', bg: 'bg-gray-50', dot: 'bg-gray-500' }
   const cumplOk = cumplimiento >= 80
@@ -347,9 +355,29 @@ function CustomTooltip({ active, payload, label }: any) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+type Rango = 'hoy' | '7d' | '15d' | '30d'
+
+const RANGOS: { label: string; val: Rango }[] = [
+  { label: 'Hoy',    val: 'hoy' },
+  { label: '7 días', val: '7d' },
+  { label: '15 días',val: '15d' },
+  { label: '30 días',val: '30d' },
+]
+
+function getRangoDates(rango: Rango): { fecha_inicio: string; fecha_fin: string } {
+  const today = new Date()
+  const fmt = (d: Date) => d.toISOString().slice(0, 10)
+  const fin = fmt(today)
+  const dias = rango === 'hoy' ? 0 : rango === '7d' ? 6 : rango === '15d' ? 14 : 29
+  const inicio = new Date(today)
+  inicio.setDate(today.getDate() - dias)
+  return { fecha_inicio: fmt(inicio), fecha_fin: fin }
+}
+
 export default function CompanyDashboard() {
   const { user } = useAuthStore()
   const [periodo, setPeriodo] = useState(getCurrentPeriodo())
+  const [rango, setRango] = useState<Rango>('30d')
   const [data, setData] = useState<CompanyDashboardData | null>(null)
   const [prevData, setPrevData] = useState<CompanyDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -362,9 +390,10 @@ export default function CompanyDashboard() {
   useEffect(() => {
     setLoading(true)
     setError('')
+    const { fecha_inicio, fecha_fin } = getRangoDates(rango)
     const prev = getPrevPeriodo(periodo)
     Promise.all([
-      getCompanyDashboard({ periodo }),
+      getCompanyDashboard({ fecha_inicio, fecha_fin }),
       getCompanyDashboard({ periodo: prev }).catch(() => null),
     ])
       .then(([cur, prv]) => {
@@ -375,7 +404,7 @@ export default function CompanyDashboard() {
         if (err?.response?.status !== 401) setError('Error al cargar el dashboard.')
       })
       .finally(() => setLoading(false))
-  }, [periodo])
+  }, [rango, periodo])
 
   if (loading) return <LoadingSpinner fullScreen />
 
@@ -411,9 +440,16 @@ export default function CompanyDashboard() {
     color: PIE_COLORS[i % PIE_COLORS.length],
   }))
 
-  // Canal spark (fake trend from 0 to venta, 6 points)
-  function canalSpark(venta: number): number[] {
-    return [0, venta * 0.2, venta * 0.45, venta * 0.6, venta * 0.8, venta]
+  // Canal spark: real daily data from backend
+  const ventas_diarias_canal: Record<string, { fecha: string; venta: number }[]> =
+    (data as any)?.ventas_diarias_canal ?? {}
+
+  function canalSpark(canal: string): SparkPoint[] {
+    const dias = ventas_diarias_canal[canal] ?? []
+    return dias.map(d => ({
+      v: d.venta,
+      label: d.fecha.slice(8), // DD del YYYY-MM-DD
+    }))
   }
 
   // Growth vs previous
@@ -436,19 +472,18 @@ export default function CompanyDashboard() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">¡Hola, {user?.nombre?.split(' ')[0]}!</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Resumen general del desempeño comercial - {periodoLabel}</p>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {rango === 'hoy' ? 'Datos de hoy' : `Últimos ${rango === '7d' ? '7' : rango === '15d' ? '15' : '30'} días`}
+                {' · '}{periodoLabel}
+              </p>
             </div>
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
-              {[
-                { label: 'Hoy', val: 'hoy' },
-                { label: '7 días', val: '7d' },
-                { label: '30 días', val: '30d' },
-                { label: 'Año', val: 'anio' },
-              ].map(({ label }) => (
+              {RANGOS.map(({ label, val }) => (
                 <button
-                  key={label}
+                  key={val}
+                  onClick={() => setRango(val)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors
-                    ${label === '30 días' ? 'bg-accent text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+                    ${rango === val ? 'bg-accent text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
                 >
                   {label}
                 </button>
@@ -606,7 +641,7 @@ export default function CompanyDashboard() {
                 venta={c.venta}
                 cumplimiento={c.cumplimiento}
                 margen_pct={c.margen_pct}
-                spark={canalSpark(c.venta)}
+                spark={canalSpark(c.canal)}
               />
             ))}
           </div>
