@@ -260,10 +260,7 @@ function TopAsesores({ data, title = 'Top Asesores por Venta', accentColor = '#2
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col">
       <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: accentColor }} />
-          <h3 className="text-sm font-bold text-gray-800">{title}</h3>
-        </div>
+        <h3 className="text-sm font-bold text-gray-800">{title}</h3>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth={2}>
@@ -296,8 +293,9 @@ function TopAsesores({ data, title = 'Top Asesores por Venta', accentColor = '#2
               <th className="text-left py-2 pr-2 font-semibold">Tienda</th>
               <th className="text-right py-2 pr-2 font-semibold">Venta</th>
               <th className="text-right py-2 pr-2 font-semibold">Cumpl. %</th>
-              <th className="text-right py-2 pr-2 font-semibold">Ticket $</th>
-              <th className="text-right py-2 font-semibold">Margen %</th>
+              <th className="text-right py-2 pr-2 font-semibold">Margen %</th>
+              <th className="text-right py-2 pr-2 font-semibold">Facturas</th>
+              <th className="text-right py-2 font-semibold">Ticket $</th>
             </tr>
           </thead>
           <tbody>
@@ -313,16 +311,15 @@ function TopAsesores({ data, title = 'Top Asesores por Venta', accentColor = '#2
                     <span className="text-gray-400 font-mono">{i + 1}</span>
                   )}
                 </td>
-                <td className="py-2 pr-2">
-                  <p className="font-medium text-gray-700 whitespace-nowrap">{row.nombre}</p>
-                </td>
+                <td className="py-2 pr-2 font-medium text-gray-700 whitespace-nowrap">{row.nombre}</td>
                 <td className="py-2 pr-2 text-gray-500 whitespace-nowrap">{row.tienda}</td>
                 <td className="py-2 pr-2 text-right font-semibold text-gray-700 whitespace-nowrap">{formatCOP(row.venta)}</td>
                 <td className="py-2 pr-2 text-right">
                   <span className={`font-bold ${getCumplColor(row.cumplimiento)}`}>{row.cumplimiento.toFixed(1)}%</span>
                 </td>
-                <td className="py-2 pr-2 text-right text-gray-500 whitespace-nowrap">{formatCOP(row.ticket_promedio)}</td>
-                <td className="py-2 text-right text-gray-500">{row.margen_pct.toFixed(1)}%</td>
+                <td className="py-2 pr-2 text-right text-gray-500">{row.margen_pct.toFixed(1)}%</td>
+                <td className="py-2 pr-2 text-right text-gray-500">{(row as any).facturas?.toLocaleString('es-CO') ?? '—'}</td>
+                <td className="py-2 text-right text-gray-500 whitespace-nowrap">{formatCOP(row.ticket_promedio)}</td>
               </tr>
             ))}
           </tbody>
