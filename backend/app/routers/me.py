@@ -72,7 +72,7 @@ async def my_dashboard(
         },
         "ventas_diarias": metrics.get_sales_by_day(df),
         "marcas": [
-            {"marca": b.get("descripcion_grupo", ""), "venta": b.get("venta", 0), "participacion": b.get("participacion_pct", 0)}
+            {"marca": b.get("descripcion_grupo", ""), "venta": b.get("venta", 0), "participacion": b.get("participacion_pct", 0), "margen_pct": b.get("margen_pct", 0)}
             for b in metrics.get_sales_by_brand(df)[:10]
         ],
         "bodegas": [

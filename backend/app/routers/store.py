@@ -68,7 +68,7 @@ async def store_dashboard(
         "ventas_diarias": metrics.get_sales_by_day(df),
         "asesores": metrics.get_advisors_for_director(df),
         "marcas": [
-            {"marca": b["descripcion_grupo"], "venta": b["venta"], "participacion": b["participacion_pct"]}
+            {"marca": b["descripcion_grupo"], "venta": b["venta"], "participacion": b["participacion_pct"], "margen_pct": b["margen_pct"]}
             for b in metrics.get_sales_by_brand(df)[:10]
         ],
         "top_productos": [
