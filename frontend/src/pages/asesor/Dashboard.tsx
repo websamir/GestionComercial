@@ -10,9 +10,7 @@ import { getMeDashboard } from '../../api/me'
 import { useAuthStore } from '../../store/auth'
 import type { AsesorDashboardData } from '../../types'
 import { formatCOP } from '../../components/KPICard'
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts'
+import HourlyChart from '../../components/HourlyChart'
 
 function getCurrentPeriodo() {
   const now = new Date()
@@ -125,16 +123,18 @@ export default function AsesorDashboard() {
           {/* Productivity row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <KPICard
-              title="Ticket Promedio"
+              title="Ticket $"
               value={data.kpis.ticket_promedio}
               format="currency"
               color="blue"
+              subtitle="Valor promedio por factura"
             />
             <KPICard
-              title="Ítems / Factura"
+              title="Ticket Ítems"
               value={data.kpis.items_factura}
               format="number"
               color="default"
+              subtitle="Ítems promedio por factura"
             />
             <KPICard
               title="Clientes Únicos"
@@ -154,28 +154,7 @@ export default function AsesorDashboard() {
           <ProductsTable data={data.top_productos} />
 
           {/* Hourly distribution */}
-          {data.distribucion_horaria && data.distribucion_horaria.length > 0 && (
-            <div className="bg-card rounded-lg shadow-sm border border-gray-100 p-4">
-              <h3 className="text-sm font-semibold text-text-primary mb-4">Distribución Horaria</h3>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={data.distribucion_horaria} margin={{ top: 0, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                  <XAxis
-                    dataKey="hora"
-                    tick={{ fontSize: 11, fill: '#64748B' }}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(h) => `${h}h`}
-                  />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748B' }} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    formatter={(val: number, name: string) => [val, name === 'facturas' ? 'Facturas' : 'Venta']}
-                  />
-                  <Bar dataKey="facturas" name="Facturas" fill="#2563EB" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+          <HourlyChart data={data.distribucion_horaria ?? []} />
         </div>
       )}
     </Layout>

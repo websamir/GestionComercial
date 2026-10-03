@@ -4,7 +4,7 @@ import KPICard from '../../components/KPICard'
 import { BrandsPieChart } from '../../components/BrandsChart'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import { getCompanyDashboard } from '../../api/company'
-import type { CompanyDashboardData, StoreRow, TopAsesor, ChannelKPIs, ConveniosData } from '../../types'
+import type { CompanyDashboardData, StoreRow, TopAsesor, ChannelKPIs, ConveniosData, ConvenioBarra, BrandSale } from '../../types'
 import { formatCOP } from '../../components/KPICard'
 
 function getCurrentPeriodo() {
@@ -18,11 +18,12 @@ function getCumplBadge(pct: number) {
   return 'text-danger bg-red-50'
 }
 
-function ChannelCard({ canal }: { canal: ChannelKPIs }) {
+function ChannelCard({ canal, barras }: { canal: ChannelKPIs; barras?: ConvenioBarra[] }) {
+  const maxVenta = barras && barras.length > 0 ? Math.max(...barras.map((b) => Math.abs(b.venta)), 1) : 1
   return (
     <div className="bg-card rounded-lg shadow-sm border border-gray-100 p-4">
       <h4 className="text-sm font-bold text-primary uppercase tracking-wide mb-3">{canal.canal}</h4>
-      <div className="grid grid-cols-3 gap-2 text-center">
+      <div className="grid grid-cols-3 gap-2 text-center mb-3">
         <div>
           <p className="text-xs text-text-secondary">Venta</p>
           <p className="text-sm font-bold text-text-primary">{formatCOP(canal.venta)}</p>
@@ -38,6 +39,39 @@ function ChannelCard({ canal }: { canal: ChannelKPIs }) {
           <p className="text-sm font-bold text-text-primary">{canal.margen_pct.toFixed(1)}%</p>
         </div>
       </div>
+
+      {false && (barras?.length ?? 0) > 0 && (
+        <div className="border-t border-gray-100 pt-3 space-y-2.5">
+          {(barras ?? []).map((b) => {
+            const pct = Math.max(0, (Math.abs(b.venta) / maxVenta) * 100)
+            const isNeg = b.venta < 0
+            return (
+              <div key={b.nombre}>
+                <div className="flex items-start justify-between mb-0.5">
+                  <div className="min-w-0 mr-2">
+                    <span className="text-xs font-medium text-text-primary truncate block">{b.nombre}</span>
+                    <span className="text-xs text-text-secondary">
+                      {b.facturas?.toLocaleString('es-CO')} fact. · {b.clientes?.toLocaleString('es-CO')} emp.
+                    </span>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <span className={`text-xs font-semibold block ${isNeg ? 'text-danger' : 'text-text-primary'}`}>
+                      {formatCOP(b.venta)}
+                    </span>
+                    <span className="text-xs text-text-secondary">{b.participacion_pct.toFixed(1)}%</span>
+                  </div>
+                </div>
+                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${isNeg ? 'bg-danger' : 'bg-primary'}`}
+                    style={{ width: `${pct}%`, opacity: isNeg ? 0.6 : 1 }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -85,41 +119,45 @@ function StoresTable({ data }: { data: StoreRow[] }) {
 }
 
 function ConveniosSection({ data }: { data: ConveniosData }) {
-  if (!data || data.total === 0) return null
+  if (!data || data.total === 0 || !data.barras?.length) return null
+  const maxVenta = Math.max(...data.barras.map((b) => Math.abs(b.venta)), 1)
   return (
     <div className="bg-card rounded-lg shadow-sm border border-gray-100 p-4">
-      <div className="mb-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-orange-500 mb-1">
-          Convenios de Financiación
-        </p>
-        <div className="flex flex-wrap gap-6 items-end">
-          <div>
-            <p className="text-2xl font-bold text-primary">{formatCOP(data.total)}</p>
-            <p className="text-xs text-text-secondary mt-0.5">Total convenios · {data.facturas} facturas</p>
-          </div>
-          {data.empresas.length > 0 && (
-            <div>
-              <p className="text-2xl font-bold text-orange-500">{data.top_empresa_pct.toFixed(1)}%</p>
-              <p className="text-xs text-text-secondary mt-0.5">
-                del total es {data.empresas[0].empresa}
-              </p>
-            </div>
-          )}
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-orange-500 mb-1">
+            Convenios de Financiación
+          </p>
+          <p className="text-2xl font-bold text-primary">{formatCOP(data.total)}</p>
+          <p className="text-xs text-text-secondary mt-0.5">{data.facturas} facturas</p>
         </div>
       </div>
 
-      <div className={`grid gap-3 ${data.empresas.length <= 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'}`}>
-        {data.empresas.map((emp) => (
-          <div key={emp.empresa} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-            <p className="text-xs font-semibold text-text-primary leading-tight mb-2 truncate" title={emp.empresa}>
-              {emp.empresa}
-            </p>
-            <p className="text-lg font-bold text-text-primary">{(emp.venta / 1_000_000).toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</p>
-            <p className="text-xs text-text-secondary mb-1">millones</p>
-            <p className="text-xs text-text-secondary">{emp.facturas} facturas</p>
-            <p className="text-xs font-medium text-primary mt-1">{emp.participacion_pct.toFixed(1)}% participación</p>
-          </div>
-        ))}
+      <div className="space-y-3">
+        {data.barras.map((b: ConvenioBarra) => {
+          const pct = Math.max(0, (b.venta / maxVenta) * 100)
+          const isNeg = b.venta < 0
+          return (
+            <div key={b.nombre}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-text-primary">{b.nombre}</span>
+                <div className="flex items-center gap-3 text-xs text-text-secondary">
+                  <span>{b.facturas} fact.</span>
+                  <span className={`font-semibold ${isNeg ? 'text-danger' : 'text-text-primary'}`}>
+                    {formatCOP(b.venta)}
+                  </span>
+                  <span className="w-10 text-right">{b.participacion_pct.toFixed(1)}%</span>
+                </div>
+              </div>
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${isNeg ? 'bg-danger' : 'bg-primary'}`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -141,14 +179,19 @@ function TopAdvisorsSegmented({
   empresa,
   tienda_virtual_edo,
   ebusiness,
+  activeTab,
+  onTabChange,
 }: {
   compra_eficiente: TopAsesor[]
   tiendas: TopAsesor[]
   empresa: TopAsesor[]
   tienda_virtual_edo: TopAsesor[]
   ebusiness: TopAsesor[]
+  activeTab: TabKey
+  onTabChange: (tab: TabKey) => void
 }) {
-  const [tab, setTab] = useState<TabKey>('tiendas')
+  const tab = activeTab ?? 'tiendas'
+  const setTab = onTabChange
 
   const dataMap: Record<TabKey, TopAsesor[]> = {
     compra_eficiente,
@@ -232,6 +275,7 @@ export default function CompanyDashboard() {
   const [data, setData] = useState<CompanyDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [canalTab, setCanalTab] = useState<TabKey>('tiendas')
 
   useEffect(() => {
     setLoading(true)
@@ -247,6 +291,18 @@ export default function CompanyDashboard() {
   }, [periodo])
 
   if (loading) return <LoadingSpinner fullScreen />
+
+  const canalAdvisors: Record<TabKey, TopAsesor[]> = data ? {
+    compra_eficiente: data.top_compra_eficiente ?? [],
+    tiendas: data.top_tiendas ?? [],
+    empresa: data.top_empresa ?? [],
+    tienda_virtual_edo: data.top_tienda_virtual_edo ?? [],
+    ebusiness: data.top_ebusiness ?? [],
+  } : { compra_eficiente: [], tiendas: [], empresa: [], tienda_virtual_edo: [], ebusiness: [] }
+
+  const canalBrandData: BrandSale[] = (data && canalAdvisors[canalTab].length > 0)
+    ? (data.marcas_canales as Record<TabKey, BrandSale[]>)?.[canalTab] ?? []
+    : []
 
   return (
     <Layout
@@ -264,7 +320,7 @@ export default function CompanyDashboard() {
       {data && (
         <div className="space-y-4">
           {/* KPI Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
             <KPICard title="Venta Total" value={data.kpis.venta_total} format="currency" color="blue" />
             <KPICard title="Meta Total" value={data.kpis.meta_total} format="currency" color="default" />
             <KPICard
@@ -275,21 +331,23 @@ export default function CompanyDashboard() {
             />
             <KPICard title="Margen %" value={data.kpis.margen_pct} format="percent" />
             <KPICard title="Facturas" value={data.kpis.facturas} format="number" />
-            <KPICard title="Ticket Prom." value={data.kpis.ticket_promedio} format="currency" />
             <KPICard title="Clientes" value={data.kpis.clientes} format="number" />
+            <KPICard title="Ticket $" value={data.kpis.ticket_promedio} format="currency" subtitle="Valor / factura" />
+            <KPICard title="Ticket Ítems" value={data.kpis.items_factura} format="number" subtitle="Ítems / factura" />
           </div>
 
           {/* Channels comparison */}
           {data.canales.length > 0 && (
-            <div className={`grid gap-3 ${data.canales.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
+            <div className={`grid gap-3 grid-cols-1 ${data.canales.length === 2 ? 'md:grid-cols-2' : data.canales.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
               {data.canales.map((canal) => (
-                <ChannelCard key={canal.canal} canal={canal} />
+                <ChannelCard
+                  key={canal.canal}
+                  canal={canal}
+                  barras={canal.canal === 'Convenios' && data.convenios ? data.convenios.barras : undefined}
+                />
               ))}
             </div>
           )}
-
-          {/* Convenios */}
-          {data.convenios && <ConveniosSection data={data.convenios} />}
 
           {/* Stores Ranking */}
           <StoresTable data={data.tiendas} />
@@ -301,10 +359,15 @@ export default function CompanyDashboard() {
             empresa={data.top_empresa ?? []}
             tienda_virtual_edo={data.top_tienda_virtual_edo ?? []}
             ebusiness={data.top_ebusiness ?? []}
+            activeTab={canalTab}
+            onTabChange={setCanalTab}
           />
 
-          {/* Brands Pie */}
-          <BrandsPieChart data={data.marcas} />
+          {/* Brands Pie — filtered by selected canal; empty if canal has no advisors */}
+          <BrandsPieChart
+            data={canalBrandData}
+            title={`Participación por Marca — ${TABS.find(t => t.key === canalTab)?.label ?? ''}`}
+          />
         </div>
       )}
     </Layout>

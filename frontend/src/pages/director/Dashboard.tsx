@@ -6,6 +6,7 @@ import SalesChart from '../../components/SalesChart'
 import { BrandsBarChart } from '../../components/BrandsChart'
 import AdvisorsTable from '../../components/AdvisorsTable'
 import ProductsTable from '../../components/ProductsTable'
+import HourlyChart from '../../components/HourlyChart'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import { getStoreDashboard } from '../../api/store'
 import { useAuthStore } from '../../store/auth'
@@ -61,7 +62,7 @@ export default function DirectorDashboard() {
       {data && (
         <div className="space-y-4">
           {/* KPI Row */}
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
             <KPICard title="Venta Tienda" value={data.kpis.venta} format="currency" color="blue" />
             <KPICard title="Meta" value={data.kpis.meta} format="currency" color="default" />
             <KPICard
@@ -83,6 +84,8 @@ export default function DirectorDashboard() {
               subtitle={`${data.kpis.facturas_dia.toFixed(1)} fact/día`}
             />
             <KPICard title="Clientes" value={data.kpis.clientes} format="number" />
+            <KPICard title="Ticket $" value={data.kpis.ticket_promedio} format="currency" subtitle="Valor / factura" />
+            <KPICard title="Ticket Ítems" value={data.kpis.items_factura} format="number" subtitle="Ítems / factura" />
           </div>
 
           {/* Compliance Bar */}
@@ -97,6 +100,9 @@ export default function DirectorDashboard() {
 
           {/* Advisors Table */}
           <AdvisorsTable data={data.asesores} clickable />
+
+          {/* Hourly distribution */}
+          <HourlyChart data={data.distribucion_horaria ?? []} />
 
           {/* Brands & Products */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

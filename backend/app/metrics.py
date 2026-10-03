@@ -109,6 +109,47 @@ def get_sales_by_brand(df: pd.DataFrame) -> list[dict]:
     return sorted(result, key=lambda x: x["venta"], reverse=True)
 
 
+def _brands_from_seg(seg: pd.DataFrame, limit: int = 8) -> list[dict]:
+    """Compute top brands for a pre-filtered segment."""
+    if seg.empty or "Descripción Grupo" not in seg.columns:
+        return []
+    total = _safe_float(seg["Valor Ventas Netas"].sum())
+    grouped = seg.groupby("Descripción Grupo", dropna=False)["Valor Ventas Netas"].sum().reset_index()
+    result = []
+    for _, row in grouped.iterrows():
+        venta = _safe_float(row["Valor Ventas Netas"])
+        result.append({
+            "marca": str(row["Descripción Grupo"]) if pd.notna(row["Descripción Grupo"]) else "Sin Grupo",
+            "venta": round(venta, 2),
+            "participacion": _safe_pct(venta, total),
+        })
+    result = [r for r in result if r["venta"] > 0]
+    result.sort(key=lambda x: x["venta"], reverse=True)
+    return result[:limit]
+
+
+def get_brands_by_channel(df: pd.DataFrame) -> dict:
+    """Brand participation split by the 5 business channels (same canal mapping as top advisors)."""
+    sdf = _sales_df(df)
+    if sdf.empty:
+        return {"tiendas": [], "empresa": [], "compra_eficiente": [], "tienda_virtual_edo": [], "ebusiness": []}
+
+    tipo = sdf["Descripción Tipo"].fillna("")
+    seg_tiendas = sdf[(sdf["Origen"] == "VENDEDOR") & ~tipo.str.contains("CONVENIOS", case=False)]
+    seg_empresa = sdf[(sdf["Origen"] == "CANAL") & ~tipo.str.contains("PLATAM", case=False)]
+    seg_compra = sdf[tipo.str.contains("CONVENIOS", case=False)]
+    seg_platam = sdf[tipo.str.contains("PLATAM", case=False)]
+    seg_addi = sdf[tipo.str.contains("ADDI", case=False)]
+
+    return {
+        "tiendas": _brands_from_seg(seg_tiendas),
+        "empresa": _brands_from_seg(seg_empresa),
+        "compra_eficiente": _brands_from_seg(seg_compra),
+        "tienda_virtual_edo": _brands_from_seg(seg_platam),
+        "ebusiness": _brands_from_seg(seg_addi),
+    }
+
+
 def get_sales_by_product(df: pd.DataFrame, limit: int = 20) -> list[dict]:
     """Top products by net sales."""
     sdf = _sales_df(df)
@@ -490,9 +531,21 @@ def get_channel_breakdown(df: pd.DataFrame) -> list[dict]:
     Channels: TIENDAS (Origen=VENDEDOR) and VENTA EMPRESA (Origen=CANAL).
     Returns fields matching ChannelKPIs in frontend types.
     """
+    # Convenios: only CONVENIOS sales rows + budget rows of those vendors
+    sdf_all = _sales_df(df)
+    if not sdf_all.empty:
+        tipo_series = sdf_all["Descripción Tipo"].fillna("")
+        conv_vends = set(sdf_all[tipo_series.str.contains("CONVENIOS", case=False)]["cod_vend"].unique())
+        budget_mask = df["Bodega"].isna() & df["cod_vend"].isin(conv_vends)
+        sales_mask = df["Bodega"].notna() & df["Descripción Tipo"].fillna("").str.contains("CONVENIOS", case=False)
+        df_convenios = df[budget_mask | sales_mask]
+    else:
+        df_convenios = df.iloc[0:0]
+
     channels = [
         ("Tiendas", df[df["Origen"] == "VENDEDOR"]),
         ("Venta Empresa", df[df["Origen"] == "CANAL"]),
+        ("Convenios", df_convenios),
     ]
 
     result = []
@@ -568,42 +621,45 @@ def get_convenios_breakdown(df: pd.DataFrame) -> dict:
     total_venta = _safe_float(seg["Valor Ventas Netas"].sum())
     total_facturas = int(seg["Número Documento"].nunique())
 
-    # Group by client company name
-    nombre_col = "Nombre Tercero" if "Nombre Tercero" in seg.columns else "Tercero"
-    grouped = seg.groupby(nombre_col, dropna=False).agg(
+    # Group by Tipo Documento + Descripción Tipo — gives one row per convenio contract
+    group_cols = ["Tipo Documento", "Descripción Tipo"] if "Tipo Documento" in seg.columns else ["Descripción Tipo"]
+    grouped = seg.groupby(group_cols, dropna=False).agg(
         venta=("Valor Ventas Netas", "sum"),
         facturas=("Número Documento", "nunique"),
+        clientes=("Tercero", "nunique"),
     ).reset_index()
 
-    empresas = []
+    barras = []
     for _, row in grouped.iterrows():
         venta = _safe_float(row["venta"])
         facturas = int(row["facturas"])
-        nombre = row[nombre_col]
-        empresas.append({
-            "empresa": str(nombre) if pd.notna(nombre) else "Sin nombre",
+        clientes = int(row["clientes"])
+        raw = str(row["Descripción Tipo"]) if pd.notna(row["Descripción Tipo"]) else "Sin tipo"
+        nombre = raw.replace("FAC CONVENIOS ", "").replace("DEVOLUCION CREDITO CONVENIOS", "DEVOLUCIÓN").strip().title()
+        barras.append({
+            "nombre": nombre,
             "venta": round(venta, 2),
             "facturas": facturas,
-            "ticket_promedio": round(venta / facturas, 2) if facturas > 0 else 0.0,
+            "clientes": clientes,
             "participacion_pct": _safe_pct(venta, total_venta),
         })
 
-    empresas.sort(key=lambda x: x["venta"], reverse=True)
-
-    # % of total that belongs to the top company
-    top_pct = empresas[0]["participacion_pct"] if empresas else 0.0
+    barras.sort(key=lambda x: x["venta"], reverse=True)
 
     return {
         "total": round(total_venta, 2),
         "facturas": total_facturas,
-        "top_empresa_pct": top_pct,
-        "empresas": empresas,
+        "barras": barras,
     }
 
 
 def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
     """
     Top advisors split by the 5 fixed business channels.
+
+    Each advisor is assigned to the canal where they have the most venta neta,
+    so an advisor only appears in ONE tab (their primary canal).
+    If a canal has no advisors assigned, its list is empty.
 
     Canal mapping (by Descripción Tipo pattern):
     - compra_eficiente:   CONVENIOS
@@ -613,7 +669,7 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
     - ebusiness:          ADDI
     """
     sdf = _sales_df(df)
-    empty = []
+    empty: list = []
 
     if sdf.empty:
         return {
@@ -624,20 +680,61 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
             "ebusiness": empty,
         }
 
-    # ppto lookup from the full df (budget rows have Bodega=NaN)
     ppto_lookup = df.groupby("cod_vend")["ppto"].first()
-
     tipo = sdf["Descripción Tipo"].fillna("")
 
-    seg_compra   = sdf[tipo.str.contains("CONVENIOS", case=False)]
-    seg_tiendas  = sdf[(sdf["Origen"] == "VENDEDOR") &
-                       tipo.str.contains(r"\bFE\b|FACT FE|FACTURAS FE|FACTURA FE|FACT\s+FE", case=False, regex=True) &
-                       ~tipo.str.contains("CONVENIOS", case=False)]
-    seg_empresa  = sdf[(sdf["Origen"] == "CANAL") & ~tipo.str.contains("PLATAM", case=False)]
-    seg_platam   = sdf[tipo.str.contains("PLATAM", case=False)]
-    seg_addi     = sdf[tipo.str.contains("ADDI", case=False)]
+    # Tag each sales row with its canal.
+    # CONVENIOS rows are excluded from advisor ranking: those sales go through regular
+    # store advisors and there are no dedicated "Compra Eficiente" advisors.
+    canal_tag = pd.Series("otro", index=sdf.index)
+    canal_tag[tipo.str.contains("PLATAM", case=False)] = "tienda_virtual_edo"
+    canal_tag[tipo.str.contains("ADDI", case=False)] = "ebusiness"
+    canal_tag[(sdf["Origen"] == "CANAL") & ~tipo.str.contains("PLATAM", case=False)] = "venta_empresa"
+    canal_tag[
+        (sdf["Origen"] == "VENDEDOR") &
+        ~tipo.str.contains("CONVENIOS", case=False)
+    ] = "tiendas"
 
-    def _top(seg: pd.DataFrame) -> list[dict]:
+    sdf = sdf.copy()
+    sdf["_canal"] = canal_tag
+
+    # Only consider rows assigned to a known canal (drop "otro")
+    sdf_known = sdf[sdf["_canal"] != "otro"]
+
+    if sdf_known.empty:
+        return {
+            "compra_eficiente": empty,
+            "tiendas": empty,
+            "venta_empresa": empty,
+            "tienda_virtual_edo": empty,
+            "ebusiness": empty,
+        }
+
+    # For each advisor, find their primary canal (the one with the highest net sales)
+    venta_by_canal = (
+        sdf_known[sdf_known["Valor Ventas Netas"] > 0]
+        .groupby(["cod_vend", "_canal"])["Valor Ventas Netas"]
+        .sum()
+        .reset_index()
+    )
+
+    if venta_by_canal.empty:
+        return {
+            "compra_eficiente": empty,
+            "tiendas": empty,
+            "venta_empresa": empty,
+            "tienda_virtual_edo": empty,
+            "ebusiness": empty,
+        }
+
+    idx_max = venta_by_canal.groupby("cod_vend")["Valor Ventas Netas"].idxmax()
+    canal_principal = venta_by_canal.loc[idx_max].set_index("cod_vend")["_canal"]
+
+    def _top(canal_name: str) -> list[dict]:
+        asesores_ids = canal_principal[canal_principal == canal_name].index
+        if len(asesores_ids) == 0:
+            return []
+        seg = sdf_known[(sdf_known["_canal"] == canal_name) & sdf_known["cod_vend"].isin(asesores_ids)]
         if seg.empty:
             return []
         vendors = seg.groupby("cod_vend").agg(
@@ -648,8 +745,6 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
         for _, vrow in vendors.iterrows():
             cod = vrow["cod_vend"]
             vdf = seg[seg["cod_vend"] == cod]
-            if vdf.empty:
-                continue
             venta = _safe_float(vdf["Valor Ventas Netas"].sum())
             utilidad = _safe_float(vdf["Valor Utilidad"].sum())
             facturas = int(vdf["Número Documento"].nunique())
@@ -670,9 +765,9 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
         return result
 
     return {
-        "compra_eficiente": _top(seg_compra),
-        "tiendas": _top(seg_tiendas),
-        "venta_empresa": _top(seg_empresa),
-        "tienda_virtual_edo": _top(seg_platam),
-        "ebusiness": _top(seg_addi),
+        "compra_eficiente": _top("compra_eficiente"),
+        "tiendas": _top("tiendas"),
+        "venta_empresa": _top("venta_empresa"),
+        "tienda_virtual_edo": _top("tienda_virtual_edo"),
+        "ebusiness": _top("ebusiness"),
     }

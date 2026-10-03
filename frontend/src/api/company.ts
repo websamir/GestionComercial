@@ -15,12 +15,12 @@ export const updateUser = (id: number, payload: Partial<CreateUserPayload>) =>
 
 export const deleteUser = (id: number) => client.delete(`/admin/users/${id}`)
 
-export const getUploadInfo = () => client.get<UploadInfo>('/admin/upload/info')
+export const getUploadInfo = () => client.get<UploadInfo>('/admin/excel/status')
 
 export const uploadExcel = (file: File) => {
   const formData = new FormData()
   formData.append('file', file)
-  return client.post<UploadInfo>('/admin/upload', formData, {
+  return client.post<UploadInfo>('/admin/excel/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 }

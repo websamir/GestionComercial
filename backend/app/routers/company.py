@@ -35,6 +35,7 @@ async def company_dashboard(
     summary = metrics.get_sales_summary(df)
     tops = metrics.get_top_advisors_by_channel(df)
     convenios = metrics.get_convenios_breakdown(df)
+    marcas_canal = metrics.get_brands_by_channel(df)
     return {
         "periodo": "",
         "kpis": {
@@ -45,6 +46,7 @@ async def company_dashboard(
             "facturas": summary["facturas"],
             "clientes": summary["clientes"],
             "ticket_promedio": summary["ticket_promedio"],
+            "items_factura": summary["items_por_factura"],
         },
         "canales": metrics.get_channel_breakdown(df),
         "tiendas": metrics.get_store_breakdown(df),
@@ -55,6 +57,7 @@ async def company_dashboard(
         "top_tienda_virtual_edo": tops["tienda_virtual_edo"],
         "top_ebusiness": tops["ebusiness"],
         "convenios": convenios,
+        "marcas_canales": marcas_canal,
         "marcas": [
             {"marca": b["descripcion_grupo"], "venta": b["venta"], "participacion": b["participacion_pct"]}
             for b in metrics.get_sales_by_brand(df)[:8]

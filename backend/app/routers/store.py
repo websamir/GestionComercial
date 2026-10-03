@@ -62,6 +62,7 @@ async def store_dashboard(
              "cod_prod": str(p.get("codigo", ""))}
             for p in metrics.get_sales_by_product(df, limit=10)
         ],
+        "distribucion_horaria": metrics.get_sales_by_hour(df),
     }
 
 

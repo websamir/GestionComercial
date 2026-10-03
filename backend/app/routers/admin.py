@@ -99,6 +99,8 @@ async def upload_excel(
         "mensaje": "Archivo cargado y cache actualizado exitosamente",
         "archivo": saved_name,
         **meta,
+        "uploaded_at": meta.get("loaded_at"),
+        "rows": meta.get("total_rows"),
     }
 
 
@@ -107,7 +109,14 @@ async def excel_status(
     current_user: Usuario = Depends(require_roles(*ADMIN_ONLY)),
 ):
     engine = get_engine()
-    return engine.get_status()
+    status = engine.get_status()
+    if not status.get("loaded"):
+        return status
+    return {
+        **status,
+        "uploaded_at": status.get("loaded_at"),
+        "rows": status.get("total_rows"),
+    }
 
 
 # ─── Users ───────────────────────────────────────────────────────────────────

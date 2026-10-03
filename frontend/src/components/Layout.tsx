@@ -61,17 +61,11 @@ export default function Layout({ children, title, subtitle, periodo, onPeriodoCh
               {subtitle && <p className="text-xs text-text-secondary truncate">{subtitle}</p>}
             </div>
 
-            {/* Period selector */}
-            {onPeriodoChange && (
-              <select
-                value={periodo}
-                onChange={(e) => onPeriodoChange(e.target.value)}
-                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-text-primary bg-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-              >
-                {allPeriodos.map((p) => (
-                  <option key={p} value={p}>{formatPeriodo(p)}</option>
-                ))}
-              </select>
+            {/* Period display — solo período actual */}
+            {periodo && (
+              <span className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-text-primary bg-white">
+                {formatPeriodo(periodo)}
+              </span>
             )}
           </div>
         </header>

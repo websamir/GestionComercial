@@ -101,6 +101,7 @@ export interface DirectorDashboardData {
   asesores: AdvisorRow[]
   marcas: BrandSale[]
   top_productos: ProductRow[]
+  distribucion_horaria: HourlyDistribution[]
 }
 
 // Company Dashboard
@@ -125,19 +126,18 @@ export interface StoreRow {
   asesores: number
 }
 
-export interface ConvenioEmpresa {
-  empresa: string
+export interface ConvenioBarra {
+  nombre: string
   venta: number
   facturas: number
-  ticket_promedio: number
+  clientes: number
   participacion_pct: number
 }
 
 export interface ConveniosData {
   total: number
   facturas: number
-  top_empresa_pct: number
-  empresas: ConvenioEmpresa[]
+  barras: ConvenioBarra[]
 }
 
 export interface TopAsesor {
@@ -161,6 +161,7 @@ export interface CompanyDashboardData {
     margen_pct: number
     facturas: number
     clientes: number
+    items_factura: number
   }
   canales: ChannelKPIs[]
   tiendas: StoreRow[]
@@ -172,6 +173,13 @@ export interface CompanyDashboardData {
   top_ebusiness: TopAsesor[]
   convenios: ConveniosData
   marcas: BrandSale[]
+  marcas_canales: {
+    tiendas: BrandSale[]
+    empresa: BrandSale[]
+    compra_eficiente: BrandSale[]
+    tienda_virtual_edo: BrandSale[]
+    ebusiness: BrandSale[]
+  }
 }
 
 // Admin
