@@ -85,11 +85,11 @@ function NewKPICard({ title, value, subtitle, trend, iconKey }: KPIProps) {
   const isUp = trend != null && trend > 0
   const isDown = trend != null && trend < 0
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col gap-3 overflow-hidden relative"
-      style={{ borderBottom: `3px solid ${ico.accent}` }}>
+    <div className="rounded-xl shadow-sm p-4 flex flex-col gap-3 overflow-hidden relative"
+      style={{ borderBottom: `3px solid ${ico.accent}`, background: `${ico.accent}12` }}>
       <div className="flex items-start justify-between">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ico.iconColor} strokeWidth={1.8}
-          strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+          strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85 }}>
           <path d={ico.d} />
         </svg>
         {trend != null && (
@@ -100,7 +100,7 @@ function NewKPICard({ title, value, subtitle, trend, iconKey }: KPIProps) {
       </div>
       <div>
         <p className="text-2xl font-bold text-gray-900 leading-none tracking-tight">{value}</p>
-        <p className="text-xs text-gray-400 mt-1.5 font-medium uppercase tracking-wide">{title}</p>
+        <p className="text-xs mt-1.5 font-medium uppercase tracking-wide" style={{ color: ico.iconColor, opacity: 0.8 }}>{title}</p>
         {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
       </div>
     </div>
@@ -524,7 +524,7 @@ export default function CompanyDashboard() {
               iconKey="ticket" title="Ticket Promedio"
               value={`$ ${((kpis?.ticket_promedio ?? 0) / 1000).toFixed(1)}K`}
               trend={trend(kpis?.ticket_promedio ?? 0, pk?.ticket_promedio)}
-              subtitle="vs. mes anterior"
+              subtitle={`$ ${((kpis?.items_factura ?? 1) > 0 ? (kpis?.ticket_promedio ?? 0) / (kpis?.items_factura ?? 1) : 0).toFixed(0)} / ítem`}
             />
             <NewKPICard
               iconKey="items" title="Ítems por Factura"

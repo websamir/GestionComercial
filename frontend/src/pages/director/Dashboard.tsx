@@ -67,16 +67,16 @@ function NewKPICard({ title, value, subtitle, iconKey }: {
 }) {
   const ico = KPI_ICONS[iconKey]
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col gap-3"
-      style={{ borderBottom: `3px solid ${ico.accent}` }}>
+    <div className="rounded-xl shadow-sm p-4 flex flex-col gap-3"
+      style={{ borderBottom: `3px solid ${ico.accent}`, background: `${ico.accent}12` }}>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ico.iconColor} strokeWidth={1.8}
-        strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+        strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85 }}>
         <path d={ico.d} />
       </svg>
       <div>
         <p className="text-2xl font-bold text-gray-900 leading-none tracking-tight">{value}</p>
-        <p className="text-xs text-gray-400 mt-1.5 font-medium uppercase tracking-wide">{title}</p>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+        <p className="text-xs mt-1.5 font-medium uppercase tracking-wide" style={{ color: ico.iconColor, opacity: 0.8 }}>{title}</p>
+        {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
       </div>
     </div>
   )
@@ -245,7 +245,7 @@ export default function DirectorDashboard() {
               subtitle={`${(kpis?.facturas_dia ?? 0).toFixed(1)} fact/día`} />
             <NewKPICard iconKey="clientes" title="Clientes"       value={String(kpis?.clientes ?? 0)} />
             <NewKPICard iconKey="ticket"   title="Ticket $"       value={fmtM(kpis?.ticket_promedio ?? 0)}
-              subtitle="Valor / factura" />
+              subtitle={`$ ${((kpis?.items_factura ?? 1) > 0 ? (kpis?.ticket_promedio ?? 0) / (kpis?.items_factura ?? 1) : 0).toFixed(0)} / ítem`} />
             <NewKPICard iconKey="items"    title="Ticket Ítems"   value={(kpis?.items_factura ?? 0).toFixed(1)}
               subtitle="Ítems / factura" />
             <NewKPICard iconKey="unidades" title="Unidades"       value={String(kpis?.unidades ?? 0)} />
