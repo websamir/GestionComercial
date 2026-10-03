@@ -89,6 +89,7 @@ export interface AdvisorRow {
   margen_pct: number
   facturas_dia: number
   ticket_promedio: number
+  items_factura: number
   clientes: number
 }
 
@@ -146,6 +147,7 @@ export interface TopAsesor {
   tienda: string
   facturas: number
   ticket_promedio: number
+  items_factura: number
   venta: number
   cumplimiento: number
   margen_pct: number

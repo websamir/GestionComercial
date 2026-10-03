@@ -473,6 +473,7 @@ def get_advisors_for_director(df: pd.DataFrame) -> list[dict]:
             dias = sdf["fecha_hora"].dropna().dt.date.nunique()
         facturas_dia = round(facturas / dias, 2) if dias > 0 else 0.0
         ticket_promedio = round(venta / facturas, 2) if facturas > 0 else 0.0
+        items_factura = round(len(sdf.dropna(subset=["Número Documento"])) / facturas, 2) if facturas > 0 else 0.0
 
         result.append({
             "cod_vend": int(cod) if pd.notna(cod) else None,
@@ -483,6 +484,7 @@ def get_advisors_for_director(df: pd.DataFrame) -> list[dict]:
             "margen_pct": _safe_pct(utilidad, venta),
             "facturas_dia": facturas_dia,
             "ticket_promedio": ticket_promedio,
+            "items_factura": items_factura,
             "clientes": clientes,
         })
 
@@ -588,6 +590,7 @@ def get_top_advisors(df: pd.DataFrame, limit: int = 10) -> list[dict]:
         utilidad = _safe_float(vdf["Valor Utilidad"].sum()) if not vdf.empty else 0.0
         facturas = int(vdf["Número Documento"].nunique()) if not vdf.empty else 0
         ticket = round(venta / facturas, 2) if facturas > 0 else 0.0
+        items = round(len(vdf.dropna(subset=["Número Documento"])) / facturas, 2) if facturas > 0 else 0.0
         result.append({
             "cod_vend": int(cod) if pd.notna(cod) else None,
             "nombre": str(vrow["nombre"]) if pd.notna(vrow["nombre"]) else "",
@@ -597,6 +600,7 @@ def get_top_advisors(df: pd.DataFrame, limit: int = 10) -> list[dict]:
             "margen_pct": _safe_pct(utilidad, venta),
             "facturas": facturas,
             "ticket_promedio": ticket,
+            "items_factura": items,
         })
 
     result.sort(key=lambda x: x["venta"], reverse=True)
@@ -750,6 +754,7 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
             facturas = int(vdf["Número Documento"].nunique())
             ppto = _safe_float(ppto_lookup.get(cod, 0))
             ticket = round(venta / facturas, 2) if facturas > 0 else 0.0
+            items = round(len(vdf.dropna(subset=["Número Documento"])) / facturas, 2) if facturas > 0 else 0.0
             result.append({
                 "cod_vend": int(cod) if pd.notna(cod) else None,
                 "nombre": str(vrow["nombre"]) if pd.notna(vrow["nombre"]) else "",
@@ -759,6 +764,7 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
                 "margen_pct": _safe_pct(utilidad, venta),
                 "facturas": facturas,
                 "ticket_promedio": ticket,
+                "items_factura": items,
             })
         result = [r for r in result if r["venta"] > 0]
         result.sort(key=lambda x: x["venta"], reverse=True)

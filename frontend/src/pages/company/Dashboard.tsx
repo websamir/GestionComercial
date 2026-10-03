@@ -238,7 +238,8 @@ function TopAdvisorsSegmented({
                   <th className="text-left py-2 pr-2 text-xs font-semibold uppercase text-text-secondary">Tienda</th>
                   <th className="text-right py-2 pr-2 text-xs font-semibold uppercase text-text-secondary">Venta</th>
                   <th className="text-right py-2 pr-2 text-xs font-semibold uppercase text-text-secondary">Cumpl%</th>
-                  <th className="text-right py-2 pr-2 text-xs font-semibold uppercase text-text-secondary">Ticket</th>
+                  <th className="text-right py-2 pr-2 text-xs font-semibold uppercase text-text-secondary">Ticket $</th>
+                  <th className="text-right py-2 pr-2 text-xs font-semibold uppercase text-text-secondary">Ticket Ítem</th>
                   <th className="text-right py-2 text-xs font-semibold uppercase text-text-secondary">Margen%</th>
                 </tr>
               </thead>
@@ -258,6 +259,7 @@ function TopAdvisorsSegmented({
                       </span>
                     </td>
                     <td className="py-1.5 pr-2 text-right text-text-secondary text-xs whitespace-nowrap">{formatCOP(row.ticket_promedio)}</td>
+                    <td className="py-1.5 pr-2 text-right text-text-secondary text-xs">{(row.items_factura ?? 0).toFixed(1)}</td>
                     <td className="py-1.5 text-right text-text-secondary text-xs">{row.margen_pct.toFixed(1)}%</td>
                   </tr>
                 ))}
