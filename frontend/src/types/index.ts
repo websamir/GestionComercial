@@ -202,6 +202,7 @@ export interface CreateUserPayload {
   password: string
   cod_vend?: number
   desc_area?: string
+  activo?: boolean
 }
 
 export interface UploadInfo {

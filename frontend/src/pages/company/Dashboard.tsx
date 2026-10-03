@@ -454,8 +454,8 @@ export default function CompanyDashboard() {
   const growth = pk && kpis ? trend(kpis.venta_total, pk.venta_total) : null
 
   // Top asesores tiendas (todos los canales de tienda, sin Venta Empresa)
-  const topAsesores: TopAsesor[] = data.top_tiendas ?? []
-  const topEmpresa: TopAsesor[] = data.top_empresa ?? []
+  const topAsesores: TopAsesor[] = data?.top_tiendas ?? []
+  const topEmpresa: TopAsesor[] = data?.top_empresa ?? []
 
   return (
     <Layout title="INVESAKK" subtitle="Vista Empresa" periodo={periodo} onPeriodoChange={setPeriodo}>
