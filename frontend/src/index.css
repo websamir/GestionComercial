@@ -4,7 +4,8 @@
 
 @layer base {
   body {
-    @apply bg-bg text-text-primary font-sans;
+    @apply text-text-primary font-sans;
+    background-color: #1E293B;
   }
 }
 
