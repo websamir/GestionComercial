@@ -56,9 +56,15 @@ class ExcelEngine:
     def load(self, filepath: str) -> dict:
         """Load Excel file and cache the DataFrame. Returns metadata."""
         with self._lock:
+            import openpyxl
+            wb = openpyxl.load_workbook(filepath, read_only=True)
+            available = wb.sheetnames
+            wb.close()
+            sheet = EXCEL_SHEET_NAME if EXCEL_SHEET_NAME in available else available[0]
+
             df = pd.read_excel(
                 filepath,
-                sheet_name=EXCEL_SHEET_NAME,
+                sheet_name=sheet,
                 engine="openpyxl",
             )
 
