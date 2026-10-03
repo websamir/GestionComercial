@@ -40,32 +40,16 @@ interface NavItem {
 
 const navByRole: Record<string, NavItem[]> = {
   ASESOR: [
-    { path: '/asesor', label: 'Inicio', icon: 'inicio', end: true },
+    { path: '/asesor', label: 'Mi Dashboard', icon: 'inicio', end: true },
   ],
   DIRECTOR: [
     { path: '/director', label: 'Mi Tienda', icon: 'mi_tienda', end: true },
   ],
   JEFE_CANAL: [
     { path: '/empresa', label: 'Inicio', icon: 'inicio', end: true },
-    { path: '/empresa', label: 'Ventas', icon: 'ventas' },
-    { path: '/empresa', label: 'Tiendas', icon: 'tiendas' },
-    { path: '/empresa', label: 'Asesores', icon: 'asesores' },
-    { path: '/empresa', label: 'Clientes', icon: 'clientes' },
-    { path: '/empresa', label: 'Productos', icon: 'productos' },
-    { path: '/empresa', label: 'Convenios', icon: 'convenios' },
-    { path: '/empresa', label: 'Facturación', icon: 'facturacion' },
-    { path: '/empresa', label: 'Reportes', icon: 'reportes' },
   ],
   ADMIN: [
     { path: '/empresa', label: 'Inicio', icon: 'inicio', end: true },
-    { path: '/empresa', label: 'Ventas', icon: 'ventas' },
-    { path: '/empresa', label: 'Tiendas', icon: 'tiendas' },
-    { path: '/empresa', label: 'Asesores', icon: 'asesores' },
-    { path: '/empresa', label: 'Clientes', icon: 'clientes' },
-    { path: '/empresa', label: 'Productos', icon: 'productos' },
-    { path: '/empresa', label: 'Convenios', icon: 'convenios' },
-    { path: '/empresa', label: 'Facturación', icon: 'facturacion' },
-    { path: '/empresa', label: 'Reportes', icon: 'reportes' },
     { path: '/admin', label: 'Configuración', icon: 'configuracion' },
   ],
 }
