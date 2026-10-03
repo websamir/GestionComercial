@@ -51,15 +51,15 @@ function getRangoDates(rango: Rango) {
 
 // ─── KPI card ────────────────────────────────────────────────────────────────
 
-const KPI_ICONS: Record<string, { d: string; bg: string; color: string }> = {
-  venta:    { d: 'M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6', bg: 'bg-blue-100', color: 'text-blue-600' },
-  meta:     { d: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z', bg: 'bg-purple-100', color: 'text-purple-600' },
-  margen:   { d: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z', bg: 'bg-orange-100', color: 'text-orange-600' },
-  fact:     { d: 'M9 12h6M9 16h6M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9zM13 2v7h7', bg: 'bg-pink-100', color: 'text-pink-600' },
-  clientes: { d: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8', bg: 'bg-teal-100', color: 'text-teal-600' },
-  ticket:   { d: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', bg: 'bg-yellow-100', color: 'text-yellow-600' },
-  items:    { d: 'M4 6h16M4 10h16M4 14h16M4 18h16', bg: 'bg-indigo-100', color: 'text-indigo-600' },
-  unidades: { d: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10', bg: 'bg-cyan-100', color: 'text-cyan-600' },
+const KPI_ICONS: Record<string, { d: string; accent: string; iconColor: string }> = {
+  venta:    { d: 'M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6',         accent: '#2563EB', iconColor: '#2563EB' },
+  meta:     { d: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z', accent: '#8B5CF6', iconColor: '#8B5CF6' },
+  margen:   { d: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z',                                accent: '#F97316', iconColor: '#F97316' },
+  fact:     { d: 'M9 12h6M9 16h6M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9zM13 2v7h7', accent: '#EC4899', iconColor: '#EC4899' },
+  clientes: { d: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8',         accent: '#14B8A6', iconColor: '#14B8A6' },
+  ticket:   { d: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', accent: '#EAB308', iconColor: '#CA8A04' },
+  items:    { d: 'M4 6h16M4 10h16M4 14h16M4 18h16',                                accent: '#6366F1', iconColor: '#6366F1' },
+  unidades: { d: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10',          accent: '#06B6D4', iconColor: '#06B6D4' },
 }
 
 function NewKPICard({ title, value, subtitle, iconKey }: {
@@ -67,19 +67,16 @@ function NewKPICard({ title, value, subtitle, iconKey }: {
 }) {
   const ico = KPI_ICONS[iconKey]
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2">
-      <div className="flex items-start justify-between">
-        <div className={`w-9 h-9 rounded-lg ${ico.bg} flex items-center justify-center flex-shrink-0`}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
-            strokeLinecap="round" strokeLinejoin="round" className={ico.color}>
-            <path d={ico.d} />
-          </svg>
-        </div>
-      </div>
+    <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col gap-3"
+      style={{ borderBottom: `3px solid ${ico.accent}` }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ico.iconColor} strokeWidth={1.8}
+        strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+        <path d={ico.d} />
+      </svg>
       <div>
-        <p className="text-xl font-bold text-gray-800 leading-tight">{value}</p>
-        <p className="text-xs text-gray-500 mt-0.5">{title}</p>
-        {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+        <p className="text-2xl font-bold text-gray-900 leading-none tracking-tight">{value}</p>
+        <p className="text-xs text-gray-400 mt-1.5 font-medium uppercase tracking-wide">{title}</p>
+        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
       </div>
     </div>
   )
@@ -87,7 +84,7 @@ function NewKPICard({ title, value, subtitle, iconKey }: {
 
 // ─── Pie/donut shared helpers ─────────────────────────────────────────────────
 
-const PIE_COLORS = ['#2563EB','#10B981','#8B5CF6','#F59E0B','#EF4444','#06B6D4','#EC4899','#84CC16','#F97316','#14B8A6']
+const PIE_COLORS = ['#1e40af','#1d4ed8','#2563eb','#3b82f6','#60a5fa','#93c5fd','#bfdbfe','#dbeafe']
 const RADIAN = Math.PI / 180
 
 function PieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) {
@@ -169,19 +166,20 @@ export default function AsesorDashboard() {
         <div className="space-y-5">
 
           {/* ── Greeting ── */}
-          <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="rounded-2xl px-6 py-5 flex flex-wrap items-center justify-between gap-4"
+            style={{ background: 'linear-gradient(135deg, #1a2e4a 0%, #1e3a5f 50%, #2563eb 100%)' }}>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">¡Hola, {user?.nombre?.split(' ')[0]}!</h1>
-              <p className="text-sm text-gray-500 mt-0.5">
+              <p className="text-xs font-semibold uppercase tracking-widest text-white/50 mb-1">Vista general</p>
+              <h1 className="text-2xl font-bold text-white leading-tight">¡Hola, {user?.nombre?.split(' ')[0]}!</h1>
+              <p className="text-sm text-white/60 mt-0.5">
                 {data.asesor.tienda} · {rango === 'hoy' ? 'Datos de hoy' : `Últimos ${rango === '7d' ? '7' : rango === '15d' ? '15' : '30'} días`}
-                {' · '}{periodoLabel}
               </p>
             </div>
-            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
+            <div className="flex items-center gap-1 rounded-xl p-1 bg-white/10 backdrop-blur-sm border border-white/20">
               {RANGOS.map(({ label, val }) => (
                 <button key={val} onClick={() => setRango(val)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors
-                    ${rango === val ? 'bg-accent text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}>
+                    ${rango === val ? 'bg-white text-gray-900 shadow-sm' : 'text-white/70 hover:text-white hover:bg-white/10'}`}>
                   {label}
                 </button>
               ))}
