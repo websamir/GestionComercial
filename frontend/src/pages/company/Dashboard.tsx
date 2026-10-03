@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import Layout from '../../components/Layout'
 import LoadingSpinner from '../../components/LoadingSpinner'
+import HourlyChart from '../../components/HourlyChart'
 import { getCompanyDashboard } from '../../api/company'
 import { useAuthStore } from '../../store/auth'
 import type { CompanyDashboardData, TopAsesor, StoreRow, BrandSale } from '../../types'
@@ -661,6 +662,9 @@ export default function CompanyDashboard() {
               accentColor="#10B981"
             />
           )}
+
+          {/* ── Distribución horaria ── */}
+          <HourlyChart data={(data as any).distribucion_horaria ?? []} />
 
         </div>
       )}

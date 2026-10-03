@@ -87,6 +87,7 @@ async def company_dashboard(
             for d in metrics.get_sales_by_day(df)
         ],
         "ventas_diarias_canal": metrics.get_sales_by_day_per_channel(df),
+        "distribucion_horaria": metrics.get_sales_by_hour(df),
     }
 
 
