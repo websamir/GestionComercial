@@ -632,22 +632,6 @@ export default function CompanyDashboard() {
         </div>
       )}
 
-      {/* ── Growth badge ── */}
-      {growth != null && (
-        <div className="fixed bottom-6 left-[268px] hidden lg:flex items-center gap-2 bg-white border border-green-100 shadow-lg rounded-xl px-4 py-3">
-          <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth={2}>
-              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-            </svg>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 leading-none">Crecimiento mensual</p>
-            <p className={`text-sm font-bold leading-tight ${growth >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-              {growth >= 0 ? '+' : ''}{growth.toFixed(1)}% <span className="text-xs font-normal text-gray-400">vs. mes anterior</span>
-            </p>
-          </div>
-        </div>
-      )}
     </Layout>
   )
 }
