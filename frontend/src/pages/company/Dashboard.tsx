@@ -238,7 +238,11 @@ function RankingTiendas({ data }: { data: StoreRow[] }) {
 
 // ─── Top advisors table ───────────────────────────────────────────────────────
 
-function TopAsesores({ data }: { data: TopAsesor[] }) {
+function TopAsesores({ data, title = 'Top Asesores por Venta', accentColor = '#2563EB' }: {
+  data: TopAsesor[]
+  title?: string
+  accentColor?: string
+}) {
   const [search, setSearch] = useState('')
   const [limit, setLimit] = useState(8)
   const filtered = data.filter(r => r.nombre.toLowerCase().includes(search.toLowerCase()))
@@ -247,7 +251,10 @@ function TopAsesores({ data }: { data: TopAsesor[] }) {
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col">
       <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-        <h3 className="text-sm font-bold text-gray-800">Top Asesores por Venta</h3>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: accentColor }} />
+          <h3 className="text-sm font-bold text-gray-800">{title}</h3>
+        </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth={2}>
@@ -412,8 +419,10 @@ export default function CompanyDashboard() {
   // Growth vs previous
   const growth = pk && kpis ? trend(kpis.venta_total, pk.venta_total) : null
 
-  // Top asesores all channels combined
-  const topAsesores: TopAsesor[] = (data as any)?.top_asesores ?? []
+  // Top asesores — excluir Venta Empresa (tienen su propio ranking)
+  const topAsesores: TopAsesor[] = ((data as any)?.top_asesores ?? [])
+    .filter((a: TopAsesor) => a.tienda?.toUpperCase() !== 'VENTA EMPRESA')
+  const topEmpresa: TopAsesor[] = data.top_empresa ?? []
 
   return (
     <Layout title="INVESAKK" subtitle="Vista Empresa" periodo={periodo} onPeriodoChange={setPeriodo}>
@@ -603,11 +612,23 @@ export default function CompanyDashboard() {
             ))}
           </div>
 
-          {/* ── Tables row ── */}
+          {/* ── Tables row: Tiendas + Top Asesores (sin Venta Empresa) ── */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <RankingTiendas data={data.tiendas} />
-            <TopAsesores data={topAsesores.length > 0 ? topAsesores : (data.top_tiendas ?? [])} />
+            <RankingTiendas data={data.tiendas.filter(t => t.tienda?.toUpperCase() !== 'VENTA EMPRESA')} />
+            <TopAsesores
+              title="Top Asesores — Tiendas"
+              data={topAsesores.length > 0 ? topAsesores : (data.top_tiendas ?? [])}
+            />
           </div>
+
+          {/* ── Top Venta Empresa ── */}
+          {topEmpresa.length > 0 && (
+            <TopAsesores
+              title="Top Asesores — Venta Empresa"
+              data={topEmpresa}
+              accentColor="#10B981"
+            />
+          )}
 
         </div>
       )}
