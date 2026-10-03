@@ -57,9 +57,10 @@ const KPI_ICONS: Record<string, { d: string; accent: string; iconColor: string }
   margen:   { d: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z',                                accent: '#F97316', iconColor: '#F97316' },
   fact:     { d: 'M9 12h6M9 16h6M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9zM13 2v7h7', accent: '#EC4899', iconColor: '#EC4899' },
   clientes: { d: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8',         accent: '#14B8A6', iconColor: '#14B8A6' },
-  ticket:   { d: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', accent: '#EAB308', iconColor: '#CA8A04' },
-  items:    { d: 'M4 6h16M4 10h16M4 14h16M4 18h16',                                accent: '#6366F1', iconColor: '#6366F1' },
-  unidades: { d: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10',          accent: '#06B6D4', iconColor: '#06B6D4' },
+  ticket:      { d: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', accent: '#EAB308', iconColor: '#CA8A04' },
+  ticketitem:  { d: 'M7 7h10M7 12h6M7 17h4M3 3h18v18H3z',                          accent: '#D97706', iconColor: '#B45309' },
+  items:       { d: 'M4 6h16M4 10h16M4 14h16M4 18h16',                              accent: '#6366F1', iconColor: '#6366F1' },
+  unidades:    { d: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10',        accent: '#06B6D4', iconColor: '#06B6D4' },
 }
 
 function NewKPICard({ title, value, subtitle, iconKey }: {
@@ -244,8 +245,11 @@ export default function DirectorDashboard() {
             <NewKPICard iconKey="fact"     title="Facturas"       value={String(kpis?.facturas ?? 0)}
               subtitle={`${(kpis?.facturas_dia ?? 0).toFixed(1)} fact/día`} />
             <NewKPICard iconKey="clientes" title="Clientes"       value={String(kpis?.clientes ?? 0)} />
-            <NewKPICard iconKey="ticket"   title="Ticket $"       value={fmtM(kpis?.ticket_promedio ?? 0)}
-              subtitle={`$ ${((kpis?.items_factura ?? 1) > 0 ? (kpis?.ticket_promedio ?? 0) / (kpis?.items_factura ?? 1) : 0).toFixed(0)} / ítem`} />
+            <NewKPICard iconKey="ticket"      title="Ticket $"      value={fmtM(kpis?.ticket_promedio ?? 0)}
+              subtitle="Valor / factura" />
+            <NewKPICard iconKey="ticketitem" title="Ítems / Ticket"
+              value={(kpis?.items_factura ?? 0).toFixed(2)}
+              subtitle="Promedio de ítems" />
             <NewKPICard iconKey="items"    title="Ticket Ítems"   value={(kpis?.items_factura ?? 0).toFixed(1)}
               subtitle="Ítems / factura" />
             <NewKPICard iconKey="unidades" title="Unidades"       value={String(kpis?.unidades ?? 0)} />
