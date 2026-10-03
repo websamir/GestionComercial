@@ -419,9 +419,8 @@ export default function CompanyDashboard() {
   // Growth vs previous
   const growth = pk && kpis ? trend(kpis.venta_total, pk.venta_total) : null
 
-  // Top asesores — excluir Venta Empresa (tienen su propio ranking)
-  const topAsesores: TopAsesor[] = ((data as any)?.top_asesores ?? [])
-    .filter((a: TopAsesor) => a.tienda?.toUpperCase() !== 'VENTA EMPRESA')
+  // Top asesores tiendas (todos los canales de tienda, sin Venta Empresa)
+  const topAsesores: TopAsesor[] = data.top_tiendas ?? []
   const topEmpresa: TopAsesor[] = data.top_empresa ?? []
 
   return (
@@ -617,7 +616,7 @@ export default function CompanyDashboard() {
             <RankingTiendas data={data.tiendas.filter(t => t.tienda?.toUpperCase() !== 'VENTA EMPRESA')} />
             <TopAsesores
               title="Top Asesores — Tiendas"
-              data={topAsesores.length > 0 ? topAsesores : (data.top_tiendas ?? [])}
+              data={topAsesores}
             />
           </div>
 
