@@ -34,7 +34,7 @@ export default function Layout({ children, title, subtitle, periodo, onPeriodoCh
 
       <div className="flex-1 lg:ml-60 flex flex-col min-h-screen">
         {/* Top bar */}
-        <header className="bg-slate-900 border-b border-slate-700 sticky top-0 z-10 shadow-sm">
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
           <div className="flex items-center gap-3 px-4 h-14">
             {/* Hamburger mobile */}
             <button
@@ -47,26 +47,26 @@ export default function Layout({ children, title, subtitle, periodo, onPeriodoCh
             </button>
 
             {/* Search bar */}
-            <div className="flex-1 hidden sm:flex items-center gap-2 bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 max-w-sm">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth={2}>
+            <div className="flex-1 hidden sm:flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 max-w-sm">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth={2}>
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
               </svg>
               <input
                 type="text"
                 placeholder="Buscar tiendas, asesores, clientes..."
-                className="bg-transparent text-sm text-slate-300 placeholder-slate-500 outline-none w-full"
+                className="bg-transparent text-sm text-gray-600 placeholder-gray-400 outline-none w-full"
                 readOnly
               />
             </div>
 
             <div className="flex-1 sm:hidden">
-              <h1 className="text-sm font-bold text-white truncate">{title}</h1>
+              <h1 className="text-sm font-bold text-gray-800 truncate">{title}</h1>
             </div>
 
             <div className="flex items-center gap-2 ml-auto">
               {/* Period display */}
               {periodo && (
-                <span className="hidden md:flex items-center gap-1.5 text-sm font-medium text-slate-300 border border-slate-600 rounded-lg px-3 py-1.5 bg-slate-800 cursor-default select-none">
+                <span className="hidden md:flex items-center gap-1.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 bg-gray-50 cursor-default select-none">
                   {formatPeriodo(periodo)}
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <polyline points="6 9 12 15 18 9"/>
@@ -75,7 +75,7 @@ export default function Layout({ children, title, subtitle, periodo, onPeriodoCh
               )}
 
               {/* Notifications */}
-              <button className="relative p-2 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors">
+              <button className="relative p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                   <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
                 </svg>
@@ -83,14 +83,14 @@ export default function Layout({ children, title, subtitle, periodo, onPeriodoCh
               </button>
 
               {/* User avatar */}
-              <div className="flex items-center gap-2 pl-2 border-l border-slate-700 cursor-default">
+              <div className="flex items-center gap-2 pl-2 border-l border-gray-200 cursor-default">
                 <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                   {initials}
                 </div>
-                <span className="hidden md:block text-sm font-medium text-slate-300 truncate max-w-[120px]">
+                <span className="hidden md:block text-sm font-medium text-gray-700 truncate max-w-[120px]">
                   {user?.nombre?.split(' ')[0]}
                 </span>
-                <svg className="hidden md:block" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth={2}>
+                <svg className="hidden md:block" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth={2}>
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </div>

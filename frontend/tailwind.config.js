@@ -16,7 +16,7 @@ export default {
         success: '#16A34A',
         danger: '#DC2626',
         warning: '#D97706',
-        bg: '#1E293B',
+        bg: '#F1F5F9',
         card: '#FFFFFF',
         'text-primary': '#1E293B',
         'text-secondary': '#64748B',
