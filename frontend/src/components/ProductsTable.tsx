@@ -41,7 +41,7 @@ export default function ProductsTable({ data, title = 'Top 10 Productos' }: Prop
                   {row.margen_pct.toFixed(1)}%
                 </td>
                 <td className="py-2 text-right text-text-secondary">
-                  {row.unidades.toLocaleString('es-CO')}
+                  {(row.unidades ?? 0).toLocaleString('es-CO')}
                 </td>
               </tr>
             ))}

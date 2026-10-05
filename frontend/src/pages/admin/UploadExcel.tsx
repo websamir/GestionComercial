@@ -25,7 +25,7 @@ export default function UploadExcel({ info, onUploaded }: Props) {
     try {
       const res = await uploadExcel(file)
       onUploaded(res.data)
-      setSuccess(`Archivo cargado exitosamente: ${res.data.rows.toLocaleString('es-CO')} registros`)
+      setSuccess(`Archivo cargado exitosamente: ${(res.data.rows ?? 0).toLocaleString('es-CO')} registros`)
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Error al cargar el archivo')
     } finally {
@@ -50,7 +50,7 @@ export default function UploadExcel({ info, onUploaded }: Props) {
           <p className="font-semibold text-primary">Archivo actual: {info.filename}</p>
           <p className="text-text-secondary text-xs mt-0.5">
             Cargado: {new Date(info.uploaded_at).toLocaleString('es-CO')} ·{' '}
-            {info.rows.toLocaleString('es-CO')} registros
+            {(info.rows ?? 0).toLocaleString('es-CO')} registros
             {info.periodo && ` · Período: ${info.periodo}`}
           </p>
         </div>
