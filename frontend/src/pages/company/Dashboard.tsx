@@ -82,10 +82,8 @@ interface KPIProps {
   iconKey: keyof typeof KPI_ICONS
 }
 
-function NewKPICard({ title, value, subtitle, trend, iconKey }: KPIProps) {
+function NewKPICard({ title, value, subtitle, iconKey }: KPIProps) {
   const ico = KPI_ICONS[iconKey]
-  const isUp = trend != null && trend > 0
-  const isDown = trend != null && trend < 0
   return (
     <div className="rounded-xl shadow-sm p-4 flex flex-col gap-3 overflow-hidden relative"
       style={{ borderBottom: `3px solid ${ico.accent}`, background: `${ico.accent}12` }}>
@@ -94,16 +92,11 @@ function NewKPICard({ title, value, subtitle, trend, iconKey }: KPIProps) {
           strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85 }}>
           <path d={ico.d} />
         </svg>
-        {trend != null && (
-          <span className={`text-xs font-semibold flex items-center gap-0.5 ${isUp ? 'text-green-600' : isDown ? 'text-red-500' : 'text-gray-400'}`}>
-            {isUp ? '↑' : isDown ? '↓' : '—'}{Math.abs(trend).toFixed(1)}%
-          </span>
-        )}
       </div>
       <div>
         <p className="text-2xl font-bold text-gray-900 leading-none tracking-tight">{value}</p>
         <p className="text-xs mt-1.5 font-medium uppercase tracking-wide" style={{ color: ico.iconColor, opacity: 0.8 }}>{title}</p>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+        {subtitle && subtitle !== 'vs. mes anterior' && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
       </div>
     </div>
   )
