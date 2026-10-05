@@ -72,8 +72,9 @@ async def root():
 @app.get("/setup-admin")
 async def setup_admin(secret: str):
     """Crea el usuario admin inicial. Solo funciona con la clave correcta."""
-    if secret != os.getenv("SETUP_SECRET", ""):
-        from fastapi import HTTPException
+    import os as _os
+    from fastapi import HTTPException
+    if secret != _os.getenv("SETUP_SECRET", "invesakk-setup-2024"):
         raise HTTPException(status_code=403, detail="Forbidden")
     from app.database import SessionLocal
     from app.models import Usuario
