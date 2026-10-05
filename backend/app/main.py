@@ -83,7 +83,9 @@ async def setup_admin(secret: str):
     try:
         existing = db.query(Usuario).filter(Usuario.email == "admin@invesakk.com").first()
         if existing:
-            return {"status": "ya existe", "email": "admin@invesakk.com"}
+            existing.password_hash = get_password_hash("Invesakk2024")
+            db.commit()
+            return {"status": "password_reset", "email": "admin@invesakk.com"}
         u = Usuario(
             email="admin@invesakk.com",
             nombre="Administrador",
