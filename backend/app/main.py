@@ -69,7 +69,7 @@ async def root():
     }
 
 
-@app.post("/setup-admin")
+@app.get("/setup-admin")
 async def setup_admin(secret: str):
     """Crea el usuario admin inicial. Solo funciona con la clave correcta."""
     if secret != os.getenv("SETUP_SECRET", ""):
