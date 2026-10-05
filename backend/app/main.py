@@ -69,6 +69,34 @@ async def root():
     }
 
 
+@app.post("/setup-admin")
+async def setup_admin(secret: str):
+    """Crea el usuario admin inicial. Solo funciona con la clave correcta."""
+    if secret != os.getenv("SETUP_SECRET", ""):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Forbidden")
+    from app.database import SessionLocal
+    from app.models import Usuario
+    from app.auth import get_password_hash
+    db = SessionLocal()
+    try:
+        existing = db.query(Usuario).filter(Usuario.email == "admin@invesakk.com").first()
+        if existing:
+            return {"status": "ya existe", "email": "admin@invesakk.com"}
+        u = Usuario(
+            email="admin@invesakk.com",
+            nombre="Administrador",
+            rol="ADMIN",
+            password_hash=get_password_hash("Invesakk2024"),
+            activo=True,
+        )
+        db.add(u)
+        db.commit()
+        return {"status": "creado", "email": "admin@invesakk.com"}
+    finally:
+        db.close()
+
+
 @app.get("/health")
 async def health():
     from app.excel_engine import get_engine
