@@ -91,6 +91,17 @@ async def company_dashboard(
     }
 
 
+@router.get("/daily")
+async def company_daily(
+    current_user: Usuario = Depends(require_roles(*ALLOWED_ROLES)),
+    fecha_inicio: Optional[date] = Query(None),
+    fecha_fin: Optional[date] = Query(None),
+):
+    df = _get_channel_df(current_user)
+    df = _filter_by_dates(df, fecha_inicio, fecha_fin)
+    return metrics.get_sales_by_day(df)
+
+
 @router.get("/channels")
 async def company_channels(
     current_user: Usuario = Depends(require_roles(*ALLOWED_ROLES)),
