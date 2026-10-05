@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
+  AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, LabelList,
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts'
 import Layout from '../../components/Layout'
@@ -43,18 +43,45 @@ function getCumplColor(p: number) {
 
 interface SparkPoint { v: number; label: string }
 
+function SparkTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="bg-gray-900 text-white text-xs rounded px-2 py-1 shadow-lg">
+      <p className="font-semibold">{label}</p>
+      <p>{fmtM(payload[0].value)}</p>
+    </div>
+  )
+}
+
+function SparkBarLabel({ x, y, width, value }: any) {
+  if (!value || value === 0) return null
+  const txt = value >= 1_000_000
+    ? `$${(value / 1_000_000).toFixed(1)}M`
+    : value >= 1_000
+    ? `$${(value / 1_000).toFixed(0)}K`
+    : `$${value}`
+  return (
+    <text x={x + width / 2} y={y - 3} textAnchor="middle" fontSize={8} fill="#475569" fontWeight="600">
+      {txt}
+    </text>
+  )
+}
+
 function Sparkline({ data, color = '#2563EB' }: { data: SparkPoint[]; color?: string }) {
   return (
-    <ResponsiveContainer width="100%" height={60}>
-      <BarChart data={data} margin={{ top: 2, right: 2, bottom: 0, left: 2 }} barCategoryGap="20%">
+    <ResponsiveContainer width="100%" height={72}>
+      <BarChart data={data} margin={{ top: 14, right: 2, bottom: 0, left: 2 }} barCategoryGap="20%">
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 9, fill: '#94a3b8' }}
+          tick={{ fontSize: 8, fill: '#94a3b8' }}
           axisLine={false}
           tickLine={false}
           interval={0}
         />
-        <Bar dataKey="v" fill={color} radius={[2, 2, 0, 0]} opacity={0.85} />
+        <Tooltip content={<SparkTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
+        <Bar dataKey="v" fill={color} radius={[2, 2, 0, 0]} opacity={0.85}>
+          <LabelList dataKey="v" content={<SparkBarLabel />} />
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   )
@@ -439,7 +466,7 @@ export default function CompanyDashboard() {
     const dias = ventas_diarias_canal[canal] ?? []
     return dias.map(d => ({
       v: d.venta,
-      label: d.fecha.slice(8), // DD del YYYY-MM-DD
+      label: `Día ${d.fecha.slice(8)}`,
     }))
   }
 
