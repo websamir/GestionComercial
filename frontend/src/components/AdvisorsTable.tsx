@@ -69,7 +69,7 @@ export default function AdvisorsTable({ data, clickable = false }: Props) {
                   {(row.items_factura ?? 0).toFixed(1)}
                 </td>
                 <td className="py-2 text-right text-text-secondary">
-                  {row.clientes.toLocaleString('es-CO')}
+                  {(row.clientes ?? 0).toLocaleString('es-CO')}
                 </td>
               </tr>
             ))}

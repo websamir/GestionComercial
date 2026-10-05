@@ -19,13 +19,14 @@ export const formatCOP = (value: number) =>
   }).format(value)
 
 export const formatValue = (value: number, format: Format): string => {
+  const v = value ?? 0
   switch (format) {
     case 'currency':
-      return formatCOP(value)
+      return formatCOP(v)
     case 'percent':
-      return `${value.toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
+      return `${v.toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
     case 'number':
-      return value.toLocaleString('es-CO')
+      return v.toLocaleString('es-CO')
   }
 }
 

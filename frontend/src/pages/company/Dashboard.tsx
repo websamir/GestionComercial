@@ -227,9 +227,9 @@ function RankingTiendas({ data }: { data: StoreRow[] }) {
                   <span className={`font-bold ${getCumplColor(row.cumplimiento)}`}>{row.cumplimiento.toFixed(1)}%</span>
                 </td>
                 <td className="py-2 pr-2 text-right text-gray-500">{row.margen_pct.toFixed(1)}%</td>
-                <td className="py-2 pr-2 text-right text-gray-500">{row.facturas.toLocaleString('es-CO')}</td>
-                <td className="py-2 pr-2 text-right text-gray-500 whitespace-nowrap">{formatCOP(row.ticket_promedio)}</td>
-                <td className="py-2 text-right text-gray-500">{row.asesores}</td>
+                <td className="py-2 pr-2 text-right text-gray-500">{(row.facturas ?? 0).toLocaleString('es-CO')}</td>
+                <td className="py-2 pr-2 text-right text-gray-500 whitespace-nowrap">{formatCOP(row.ticket_promedio ?? 0)}</td>
+                <td className="py-2 text-right text-gray-500">{row.asesores ?? 0}</td>
               </tr>
             ))}
           </tbody>
