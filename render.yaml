@@ -10,7 +10,7 @@ services:
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: 480
       - key: CORS_ORIGINS
-        value: "https://gestion-comercial-dusky.vercel.app,http://localhost:5173,http://localhost:3000"
+        value: "https://gestion-comercial-rho.vercel.app,https://gestion-comercial-dusky.vercel.app,http://localhost:5173,http://localhost:3000"
     disk:
       name: uploads
       mountPath: /opt/render/project/src/backend/uploads
