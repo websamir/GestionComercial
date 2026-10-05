@@ -55,6 +55,23 @@ class ReglaComisionSchema(BaseModel):
 
 # ─── Excel upload ────────────────────────────────────────────────────────────
 
+@router.post("/excel/reload")
+async def reload_excel(
+    current_user: Usuario = Depends(require_roles(*ADMIN_ONLY)),
+):
+    """Reload the most recent Excel from disk without uploading a new file."""
+    import glob as _glob
+    files = sorted(_glob.glob(os.path.join(UPLOAD_DIR, "*.xlsx")), key=os.path.getmtime, reverse=True)
+    if not files:
+        raise HTTPException(status_code=404, detail="No hay archivos Excel en el servidor.")
+    engine = get_engine()
+    try:
+        meta = engine.load(files[0])
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Error al procesar el Excel: {str(e)}")
+    return {"mensaje": "Excel recargado desde disco", "archivo": os.path.basename(files[0]), **meta}
+
+
 @router.post("/excel/upload")
 async def upload_excel(
     request: Request,
