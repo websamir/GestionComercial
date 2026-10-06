@@ -357,6 +357,66 @@ async def update_rules(
     return {"mensaje": f"{len(rules)} reglas actualizadas.", "reglas": len(rules)}
 
 
+# ─── Access control ──────────────────────────────────────────────────────────
+
+@router.get("/access-control")
+async def get_access_control(
+    current_user: Usuario = Depends(require_roles(*ADMIN_ONLY)),
+    db: Session = Depends(get_db),
+):
+    from datetime import date
+    from sqlalchemy import func
+
+    today = date.today()
+
+    users = db.query(Usuario).order_by(Usuario.nombre).all()
+
+    total_map = {
+        r.usuario_id: r.total
+        for r in db.query(AuditLog.usuario_id, func.count(AuditLog.id).label("total"))
+        .filter(AuditLog.accion == "LOGIN")
+        .group_by(AuditLog.usuario_id)
+        .all()
+    }
+    today_map = {
+        r.usuario_id: r.hoy
+        for r in db.query(AuditLog.usuario_id, func.count(AuditLog.id).label("hoy"))
+        .filter(AuditLog.accion == "LOGIN", func.date(AuditLog.fecha) == today)
+        .group_by(AuditLog.usuario_id)
+        .all()
+    }
+    last_map = {
+        r.usuario_id: r.ultimo
+        for r in db.query(AuditLog.usuario_id, func.max(AuditLog.fecha).label("ultimo"))
+        .filter(AuditLog.accion == "LOGIN")
+        .group_by(AuditLog.usuario_id)
+        .all()
+    }
+
+    result = [
+        {
+            "id": u.id,
+            "nombre": u.nombre,
+            "email": u.email,
+            "rol": u.rol,
+            "desc_area": u.desc_area,
+            "cod_vend": u.cod_vend,
+            "canal": u.canal,
+            "activo": u.activo,
+            "total_ingresos": total_map.get(u.id, 0),
+            "ingresos_hoy": today_map.get(u.id, 0),
+            "ultimo_acceso": last_map[u.id].isoformat() if u.id in last_map else None,
+        }
+        for u in users
+    ]
+
+    return {
+        "total_ingresos_hoy": sum(today_map.values()),
+        "usuarios_activos_hoy": len([v for v in today_map.values() if v > 0]),
+        "usuarios": result,
+    }
+
+
 # ─── Stores from Excel ───────────────────────────────────────────────────────
 
 @router.get("/stores")

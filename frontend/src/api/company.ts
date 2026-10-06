@@ -24,3 +24,5 @@ export const uploadExcel = (file: File) => {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 }
+
+export const getAccessControl = () => client.get<any>('/admin/access-control')

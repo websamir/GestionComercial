@@ -2,8 +2,22 @@ import { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
 import UploadExcel from './UploadExcel'
 import LoadingSpinner from '../../components/LoadingSpinner'
-import { getUsers, createUser, updateUser, getUploadInfo } from '../../api/company'
+import { getUsers, createUser, updateUser, getUploadInfo, getAccessControl } from '../../api/company'
 import type { AdminUser, CreateUserPayload, UploadInfo, UserRole } from '../../types'
+
+// ─── helpers control de acceso ────────────────────────────────────────────────
+
+function fmtUltimoAcceso(iso: string | null): { text: string; hoy: boolean; ayer: boolean } {
+  if (!iso) return { text: 'Sin registro', hoy: false, ayer: false }
+  const d = new Date(iso + (iso.endsWith('Z') ? '' : 'Z'))
+  const now = new Date()
+  const diffMs = now.getTime() - d.getTime()
+  const diffDays = Math.floor(diffMs / 86400000)
+  const hora = d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' })
+  if (diffDays === 0) return { text: `Hoy ${hora}`, hoy: true, ayer: false }
+  if (diffDays === 1) return { text: `Ayer ${hora}`, hoy: false, ayer: true }
+  return { text: `Hace ${diffDays} días`, hoy: false, ayer: false }
+}
 
 const ROL_OPTIONS: UserRole[] = ['ASESOR', 'DIRECTOR', 'JEFE_CANAL', 'ADMIN']
 const ROL_LABEL: Record<UserRole, string> = {
@@ -128,6 +142,9 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [uploadInfo, setUploadInfo] = useState<UploadInfo | null>(null)
   const [loading, setLoading] = useState(true)
+  const [accessData, setAccessData] = useState<any>(null)
+  const [accessSearch, setAccessSearch] = useState('')
+  const [accessFilterRol, setAccessFilterRol] = useState('todos')
 
   // Create form
   const [showCreate, setShowCreate] = useState(false)
@@ -152,6 +169,7 @@ export default function AdminDashboard() {
     Promise.all([
       getUsers().then((r) => setUsers(r.data)),
       getUploadInfo().then((r) => setUploadInfo(r.data)).catch(() => {}),
+      getAccessControl().then((r) => setAccessData(r.data)).catch(() => {}),
     ]).finally(() => setLoading(false))
 
   useEffect(() => { reload() }, [])
@@ -229,6 +247,115 @@ export default function AdminDashboard() {
     <Layout title="Administración" subtitle="Panel de administración INVESAKK">
       <div className="space-y-6">
         <UploadExcel info={uploadInfo} onUploaded={(info) => setUploadInfo(info)} />
+
+        {/* ── Control de acceso ── */}
+        <div className="bg-card rounded-lg shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <h3 className="text-sm font-semibold text-text-primary">Control de Acceso</h3>
+          </div>
+
+          {/* Summary cards */}
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            <div className="rounded-xl p-3" style={{ background: '#2563EB12', borderBottom: '3px solid #2563EB' }}>
+              <p className="text-2xl font-bold text-gray-900">{accessData?.total_ingresos_hoy ?? 0}</p>
+              <p className="text-xs font-medium uppercase tracking-wide mt-1" style={{ color: '#2563EB' }}>Ingresos hoy</p>
+            </div>
+            <div className="rounded-xl p-3" style={{ background: '#16a34a12', borderBottom: '3px solid #16a34a' }}>
+              <p className="text-2xl font-bold text-gray-900">{accessData?.usuarios_activos_hoy ?? 0}</p>
+              <p className="text-xs font-medium uppercase tracking-wide mt-1" style={{ color: '#16a34a' }}>Usuarios activos hoy</p>
+            </div>
+            <div className="rounded-xl p-3" style={{ background: '#8B5CF612', borderBottom: '3px solid #8B5CF6' }}>
+              <p className="text-2xl font-bold text-gray-900">
+                {accessData?.usuarios ? accessData.usuarios.reduce((s: number, u: any) => s + (u.total_ingresos || 0), 0) : 0}
+              </p>
+              <p className="text-xs font-medium uppercase tracking-wide mt-1" style={{ color: '#8B5CF6' }}>Ingresos totales</p>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            <input
+              type="text"
+              value={accessSearch}
+              onChange={(e) => setAccessSearch(e.target.value)}
+              placeholder="Buscar usuario..."
+              className="flex-1 min-w-[160px] px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+            />
+            <select value={accessFilterRol} onChange={(e) => setAccessFilterRol(e.target.value)}
+              className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent bg-white">
+              <option value="todos">Todos los roles</option>
+              {ROL_OPTIONS.map((r) => <option key={r} value={r}>{ROL_LABEL[r]}</option>)}
+            </select>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left py-2 pr-3 text-xs font-semibold uppercase text-text-secondary">Usuario</th>
+                  <th className="text-left py-2 pr-3 text-xs font-semibold uppercase text-text-secondary">Rol</th>
+                  <th className="text-left py-2 pr-3 text-xs font-semibold uppercase text-text-secondary">Tienda / Canal</th>
+                  <th className="text-right py-2 pr-3 text-xs font-semibold uppercase text-text-secondary">Total ingresos</th>
+                  <th className="text-right py-2 pr-3 text-xs font-semibold uppercase text-text-secondary">Hoy</th>
+                  <th className="text-left py-2 pr-3 text-xs font-semibold uppercase text-text-secondary">Último acceso</th>
+                  <th className="text-center py-2 text-xs font-semibold uppercase text-text-secondary">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(accessData?.usuarios ?? [])
+                  .filter((u: any) => {
+                    const q = accessSearch.toLowerCase()
+                    return (
+                      (u.nombre?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)) &&
+                      (accessFilterRol === 'todos' || u.rol === accessFilterRol)
+                    )
+                  })
+                  .map((u: any) => {
+                    const { text, hoy, ayer } = fmtUltimoAcceso(u.ultimo_acceso)
+                    const activoHoy = u.ingresos_hoy > 0
+                    const sinAcceso = !u.ultimo_acceso || (!hoy && !ayer && u.ingresos_hoy === 0)
+                    return (
+                      <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50">
+                        <td className="py-2 pr-3">
+                          <p className="font-medium text-text-primary whitespace-nowrap">{u.nombre}</p>
+                          <p className="text-xs text-text-secondary">{u.email}</p>
+                        </td>
+                        <td className="py-2 pr-3">
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${rolBadge[u.rol as UserRole] ?? 'bg-gray-100 text-gray-600'}`}>
+                            {ROL_LABEL[u.rol as UserRole] ?? u.rol}
+                          </span>
+                        </td>
+                        <td className="py-2 pr-3 text-xs text-text-secondary">{u.desc_area ?? u.canal ?? '—'}</td>
+                        <td className="py-2 pr-3 text-right font-mono text-sm text-text-primary">{u.total_ingresos}</td>
+                        <td className="py-2 pr-3 text-right">
+                          <span className={`font-mono text-sm font-semibold ${u.ingresos_hoy > 0 ? 'text-green-600' : 'text-text-secondary'}`}>
+                            {u.ingresos_hoy}
+                          </span>
+                        </td>
+                        <td className="py-2 pr-3 text-xs text-text-secondary whitespace-nowrap">{text}</td>
+                        <td className="py-2 text-center">
+                          {activoHoy ? (
+                            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">● Activo hoy</span>
+                          ) : sinAcceso ? (
+                            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Sin registro</span>
+                          ) : (
+                            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">Inactivo</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                {(accessData?.usuarios ?? []).length === 0 && (
+                  <tr><td colSpan={7} className="py-6 text-center text-text-secondary text-sm">Sin datos de acceso aún</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         <div className="bg-card rounded-lg shadow-sm border border-gray-100 p-6">
           {/* Header */}

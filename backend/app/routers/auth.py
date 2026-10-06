@@ -12,7 +12,7 @@ from app.auth import (
     build_token_claims,
     get_current_user,
 )
-from app.models import Usuario
+from app.models import Usuario, AuditLog
 from app.config import ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -42,6 +42,18 @@ async def login(request: Request, form: LoginRequest, db: Session = Depends(get_
 
     claims = build_token_claims(user)
     token = create_access_token(claims, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+
+    try:
+        log = AuditLog(
+            usuario_id=user.id,
+            accion="LOGIN",
+            recurso="auth",
+            ip=request.client.host if request.client else None,
+        )
+        db.add(log)
+        db.commit()
+    except Exception:
+        db.rollback()
 
     return TokenResponse(
         access_token=token,
