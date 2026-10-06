@@ -78,6 +78,7 @@ async def store_dashboard(
             for p in metrics.get_sales_by_product(df, limit=10)
         ],
         "distribucion_horaria": metrics.get_sales_by_hour(df),
+        "convenios": metrics.get_convenios_breakdown(df),
     }
 
 

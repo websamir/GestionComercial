@@ -247,6 +247,33 @@ export default function AsesorDashboard() {
           {/* ── Distribución horaria ── */}
           <HourlyChart data={(data as any).distribucion_horaria ?? []} />
 
+          {/* ── Convenios ── */}
+          {(() => {
+            const conv = (data as any).convenios
+            if (!conv || conv.total === 0) return null
+            const items: { nombre: string; venta: number; margen_pct: number }[] = [
+              { nombre: 'TOTAL\nCONVENIOS', venta: conv.total, margen_pct: conv.margen_pct },
+              ...(conv.convenios ?? []),
+            ]
+            return (
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Convenios</span>
+                </div>
+                <div className="flex gap-4 overflow-x-auto">
+                  {items.map((c, i) => (
+                    <div key={c.nombre} className={`flex-shrink-0 ${i === 0 ? 'pr-4 border-r border-gray-100' : ''}`}>
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase whitespace-pre-line leading-tight mb-0.5">{c.nombre}</p>
+                      <p className={`font-bold text-gray-800 ${i === 0 ? 'text-xl' : 'text-sm'}`}>{fmtM(c.venta)}</p>
+                      <p className="text-[10px] text-gray-400">Margen {c.margen_pct.toFixed(1)}%</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+
           {/* ── Marcas: barras + torta margen ── */}
           {marcas.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
