@@ -17,7 +17,7 @@ function RootRedirect() {
     case 'ASESOR': return <Navigate to="/asesor" replace />
     case 'DIRECTOR': return <Navigate to="/director" replace />
     case 'JEFE_CANAL': return <Navigate to="/empresa" replace />
-    case 'ADMIN': return <Navigate to="/admin" replace />
+    case 'ADMIN': return <Navigate to="/empresa" replace />
     default: return <Navigate to="/login" replace />
   }
 }
