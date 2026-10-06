@@ -203,6 +203,9 @@ class ExcelEngine:
                 "valor_ventas_netas": "Valor Ventas Netas",
                 "cantidad_venta_neta": "Cantidad Venta Neta",
                 "valor_utilidad": "Valor Utilidad",
+                "tercero": "Tercero",
+                "grupo": "Grupo",
+                "origen": "Origen",
             }
             df = df.rename(columns=rename)
 
