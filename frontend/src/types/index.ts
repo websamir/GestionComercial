@@ -164,6 +164,7 @@ export interface CompanyDashboardData {
     facturas: number
     clientes: number
     items_factura: number
+    faltan: number
   }
   canales: ChannelKPIs[]
   tiendas: StoreRow[]
