@@ -44,6 +44,9 @@ def _sync_excel_to_db(filepath: str, filename: str, database_url: str) -> int:
         "Valor Ventas Netas": "valor_ventas_netas",
         "Cantidad Venta Neta": "cantidad_venta_neta",
         "Valor Utilidad": "valor_utilidad",
+        "Tercero": "tercero",
+        "Grupo": "grupo",
+        "Origen": "origen",
     }
     df = df.rename(columns=rename)
     df["archivo_origen"] = filename
