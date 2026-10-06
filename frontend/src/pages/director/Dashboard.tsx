@@ -176,10 +176,25 @@ export default function DirectorDashboard() {
   const [data, setData] = useState<DirectorDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [syncedAt, setSyncedAt] = useState<string | null>(null)
 
   const MESES_LONG = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
   const [y, m] = periodo.split('-').map(Number)
   const periodoLabel = `${MESES_LONG[m - 1]} ${y}`
+
+  useEffect(() => {
+    const apiBase = import.meta.env.VITE_API_URL ?? '/api'
+    const healthUrl = apiBase.replace(/\/api$/, '') + '/health'
+    fetch(healthUrl).then(r => r.json()).then(h => {
+      const at = h?.excel_status?.loaded_at
+      if (at) {
+        const d = new Date(at + 'Z')
+        const fmt = d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Bogota' })
+        const hr = d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' })
+        setSyncedAt(`${fmt} a las ${hr}`)
+      }
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -219,10 +234,11 @@ export default function DirectorDashboard() {
             style={{ background: 'linear-gradient(135deg, #1a2e4a 0%, #1e3a5f 50%, #2563eb 100%)' }}>
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-white/50 mb-1">Vista general</p>
-              <h1 className="text-2xl font-bold text-white leading-tight">¡Hola, {user?.nombre?.split(' ')[0]}!</h1>
+              <h1 className="text-2xl font-bold text-white leading-tight">¡Hola, {data.director ?? user?.nombre}!</h1>
               <p className="text-sm text-white/60 mt-0.5">
                 {data.tienda} · {rango === 'hoy' ? 'Datos de hoy' : `Últimos ${rango === '7d' ? '7' : rango === '15d' ? '15' : '30'} días`}
               </p>
+              {syncedAt && <p className="text-blue-400/70 text-xs mt-0.5">Actualizado el {syncedAt}</p>}
             </div>
             <div className="flex items-center gap-1 rounded-xl p-1 bg-white/10 backdrop-blur-sm border border-white/20">
               {RANGOS.map(({ label, val }) => (
