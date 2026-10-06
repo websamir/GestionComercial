@@ -20,6 +20,43 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 ADMIN_ONLY = ("ADMIN",)
 
 
+def _sync_excel_to_db(filepath: str, filename: str, database_url: str) -> int:
+    """Insert all rows from an Excel file into ventas_raw, replacing existing data."""
+    import pandas as pd
+    import sqlalchemy
+    from sqlalchemy import text
+
+    df = pd.read_excel(filepath, sheet_name=None)
+    from app.config import EXCEL_SHEET_NAME
+    sheet = EXCEL_SHEET_NAME if EXCEL_SHEET_NAME in df else list(df.keys())[0]
+    df = df[sheet]
+
+    rename = {
+        "Bodega": "bodega",
+        "Descripción Bodega": "descripcion_bodega",
+        "Tipo Documento": "tipo_documento",
+        "Descripción Tipo": "descripcion_tipo",
+        "Número Documento": "numero_documento",
+        "Código Item": "codigo_item",
+        "Descripción Item": "descripcion_item",
+        "Nombre Tercero": "nombre_tercero",
+        "Descripción Grupo": "descripcion_grupo",
+        "Valor Ventas Netas": "valor_ventas_netas",
+        "Cantidad Venta Neta": "cantidad_venta_neta",
+        "Valor Utilidad": "valor_utilidad",
+    }
+    df = df.rename(columns=rename)
+    df["archivo_origen"] = filename
+    df["fecha_hora"] = pd.to_datetime(df.get("fecha_hora", pd.NaT), errors="coerce")
+
+    eng = sqlalchemy.create_engine(database_url, pool_pre_ping=True)
+    with eng.begin() as conn:
+        conn.execute(text("TRUNCATE TABLE ventas_raw RESTART IDENTITY"))
+        df.to_sql("ventas_raw", conn, if_exists="append", index=False, method="multi", chunksize=200)
+    eng.dispose()
+    return len(df)
+
+
 # ─── Pydantic schemas ───────────────────────────────────────────────────────
 
 class UsuarioCreate(BaseModel):
@@ -72,6 +109,22 @@ async def reload_excel(
     return {"mensaje": "Excel recargado desde disco", "archivo": os.path.basename(files[0]), **meta}
 
 
+@router.post("/excel/reload-from-db")
+async def reload_from_db(
+    current_user: Usuario = Depends(require_roles(*ADMIN_ONLY)),
+):
+    """Reload DataFrame from ventas_raw table in PostgreSQL/Supabase."""
+    from app.config import DATABASE_URL
+    if DATABASE_URL.startswith("sqlite"):
+        raise HTTPException(status_code=400, detail="Solo disponible en modo PostgreSQL.")
+    engine = get_engine()
+    try:
+        meta = engine.load_from_db(DATABASE_URL)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Error cargando desde DB: {str(e)}")
+    return {"mensaje": "Datos recargados desde Supabase", **meta}
+
+
 @router.post("/excel/upload")
 async def upload_excel(
     request: Request,
@@ -101,6 +154,16 @@ async def upload_excel(
         os.remove(saved_path)
         raise HTTPException(status_code=422, detail=f"Error al procesar el Excel: {str(e)}")
 
+    # Sync to Supabase ventas_raw so data persists across Render restarts
+    from app.config import DATABASE_URL
+    sync_msg = None
+    if not DATABASE_URL.startswith("sqlite"):
+        try:
+            _sync_excel_to_db(saved_path, saved_name, DATABASE_URL)
+            sync_msg = "Sincronizado a Supabase"
+        except Exception as e:
+            sync_msg = f"Advertencia: no se pudo sincronizar a DB: {str(e)}"
+
     # Audit log
     log = AuditLog(
         usuario_id=current_user.id,
@@ -118,6 +181,7 @@ async def upload_excel(
         **meta,
         "uploaded_at": meta.get("loaded_at"),
         "rows": meta.get("total_rows"),
+        "sync_db": sync_msg,
     }
 
 

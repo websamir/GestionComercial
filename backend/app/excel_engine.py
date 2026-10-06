@@ -1,6 +1,7 @@
 """
 ExcelEngine: Singleton for loading and caching the Excel sales DataFrame.
 Thread-safe read access via threading.Lock.
+Can load from a local Excel file or directly from the ventas_raw table in PostgreSQL.
 """
 import threading
 import os
@@ -179,6 +180,64 @@ class ExcelEngine:
         """List unique store names (desc_area values)."""
         df = self.get_df()
         return sorted(df["desc_area"].dropna().unique().tolist())
+
+    def load_from_db(self, database_url: str) -> dict:
+        """Load DataFrame from ventas_raw table in PostgreSQL (Supabase)."""
+        import sqlalchemy
+        with self._lock:
+            engine = sqlalchemy.create_engine(database_url, pool_pre_ping=True)
+            df = pd.read_sql("SELECT * FROM ventas_raw ORDER BY id", engine)
+            engine.dispose()
+
+            # Rename DB columns back to Excel column names
+            rename = {
+                "bodega": "Bodega",
+                "descripcion_bodega": "Descripción Bodega",
+                "tipo_documento": "Tipo Documento",
+                "descripcion_tipo": "Descripción Tipo",
+                "numero_documento": "Número Documento",
+                "codigo_item": "Código Item",
+                "descripcion_item": "Descripción Item",
+                "nombre_tercero": "Nombre Tercero",
+                "descripcion_grupo": "Descripción Grupo",
+                "valor_ventas_netas": "Valor Ventas Netas",
+                "cantidad_venta_neta": "Cantidad Venta Neta",
+                "valor_utilidad": "Valor Utilidad",
+            }
+            df = df.rename(columns=rename)
+
+            # Drop internal DB columns
+            df = df.drop(columns=["id", "archivo_origen", "cargado_en"], errors="ignore")
+
+            if "fecha_hora" in df.columns:
+                df["fecha_hora"] = pd.to_datetime(df["fecha_hora"], errors="coerce")
+
+            str_cols = [
+                "nombre_vend", "desc_area", "Descripción Bodega",
+                "Tipo Documento", "Descripción Tipo", "ciudad", "dpto",
+                "Descripción Item", "Nombre Tercero", "Descripción Grupo", "Origen",
+            ]
+            for col in str_cols:
+                if col in df.columns:
+                    df[col] = df[col].astype(str).str.strip()
+                    df[col] = df[col].replace({"nan": None, "None": None, "": None})
+
+            self._df = df
+
+            archivo = df["archivo_origen"].iloc[0] if "archivo_origen" in df.columns else "ventas_raw (DB)"
+            periodo = self._infer_periodo(df, "")
+            self._metadata = {
+                "filename": archivo,
+                "filepath": "postgresql://ventas_raw",
+                "loaded_at": datetime.utcnow().isoformat(),
+                "periodo": periodo,
+                "total_rows": len(df),
+                "rows_with_sales": int(df["Bodega"].notna().sum()),
+                "rows_without_sales": int(df["Bodega"].isna().sum()),
+                "vendors_count": int(df["cod_vend"].nunique()),
+                "source": "database",
+            }
+            return self._metadata
 
     def get_status(self) -> dict:
         """Return metadata about the loaded file."""

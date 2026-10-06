@@ -43,19 +43,30 @@ app.include_router(admin.router)
 @app.on_event("startup")
 async def startup():
     init_db()
-    # Auto-load the most recent uploaded Excel on startup so cache survives restarts
     import os, glob as _glob
     from app.excel_engine import get_engine
-    upload_dir = os.path.join(os.path.dirname(__file__), "..", "uploads")
-    upload_dir = os.path.abspath(upload_dir)
+    from app.config import DATABASE_URL
+
+    # 1. Try local Excel file first
+    upload_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "uploads"))
+    excel_loaded = False
     if os.path.isdir(upload_dir):
         files = sorted(_glob.glob(os.path.join(upload_dir, "*.xlsx")), key=os.path.getmtime, reverse=True)
         if files:
             try:
                 get_engine().load(files[0])
-                print(f"Excel auto-cargado al inicio: {os.path.basename(files[0])}")
+                print(f"[startup] Excel cargado desde disco: {os.path.basename(files[0])}")
+                excel_loaded = True
             except Exception as e:
-                print(f"Error al auto-cargar Excel: {e}")
+                print(f"[startup] Error cargando Excel local: {e}")
+
+    # 2. If no local file and using PostgreSQL, load from ventas_raw table
+    if not excel_loaded and not DATABASE_URL.startswith("sqlite"):
+        try:
+            meta = get_engine().load_from_db(DATABASE_URL)
+            print(f"[startup] Datos cargados desde DB: {meta['total_rows']} filas, periodo {meta['periodo']}")
+        except Exception as e:
+            print(f"[startup] Error cargando desde DB: {e}")
 
 
 @app.get("/")
