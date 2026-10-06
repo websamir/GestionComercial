@@ -50,6 +50,7 @@ const navByRole: Record<string, NavItem[]> = {
   ],
   ADMIN: [
     { path: '/empresa', label: 'Inicio', icon: 'inicio', end: true },
+    { path: '/admin/accesos', label: 'Control de Acceso', icon: 'admin' },
     { path: '/admin', label: 'Configuración', icon: 'configuracion' },
   ],
 }

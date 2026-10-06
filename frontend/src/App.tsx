@@ -7,6 +7,7 @@ import AsesorDashboard from './pages/asesor/Dashboard'
 import DirectorDashboard from './pages/director/Dashboard'
 import CompanyDashboard from './pages/company/Dashboard'
 import AdminDashboard from './pages/admin/Dashboard'
+import AccessControlPage from './pages/admin/AccessControl'
 
 function RootRedirect() {
   const { user, isAuthenticated, hydrated } = useAuthStore()
@@ -54,6 +55,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={['JEFE_CANAL', 'ADMIN']}>
               <CompanyDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/accesos"
+          element={
+            <ProtectedRoute roles={['ADMIN']}>
+              <AccessControlPage />
             </ProtectedRoute>
           }
         />
