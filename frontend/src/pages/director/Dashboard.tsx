@@ -96,34 +96,33 @@ function ProyeccionCard({ venta, meta, faltan, diasTrabajados }: {
   const ritmoNecesario = diasRestantes > 0 ? faltan / diasRestantes : 0
   const proyeccion = venta + ritmoActual * diasRestantes
   const proyeccionPct = meta > 0 ? Math.min((proyeccion / meta) * 100, 999) : 0
-  const [color, label] = proyeccionPct >= 100
-    ? ['#16a34a', '● EN CAMINO']
+  const [bg, label] = proyeccionPct >= 100
+    ? ['#15803d', 'EN CAMINO']
     : proyeccionPct >= 80
-    ? ['#d97706', '● EN RIESGO']
+    ? ['#b45309', 'EN RIESGO']
     : proyeccionPct >= 60
-    ? ['#ea580c', '● ALERTA']
-    : ['#dc2626', '● CRÍTICO']
+    ? ['#c2410c', 'ALERTA']
+    : ['#b91c1c', 'CRÍTICO']
   return (
-    <div className="col-span-2 rounded-xl shadow-sm p-4 flex flex-col justify-between"
-      style={{ borderBottom: `3px solid ${color}`, background: `${color}0f` }}>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Proyección de Cierre</p>
-        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-          style={{ background: `${color}20`, color }}>{label}</span>
+    <div className="col-span-2 rounded-xl p-4 flex flex-col justify-between"
+      style={{ background: bg }}>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.65)' }}>Proyección de Cierre</p>
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}>{label}</span>
       </div>
-      <p className="text-2xl font-bold text-gray-900 leading-none">{proyeccionPct.toFixed(1)}%</p>
-      <p className="text-[10px] text-gray-400 mt-0.5">al ritmo actual → {fmtM(proyeccion)}</p>
-      <div className="grid grid-cols-2 gap-2 mt-2">
+      <p className="text-3xl font-bold leading-none mt-1" style={{ color: '#fff' }}>{proyeccionPct.toFixed(1)}%</p>
+      <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>al ritmo actual → {fmtM(proyeccion)}</p>
+      <div className="grid grid-cols-2 gap-2 mt-3 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
         <div>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wide">Ritmo actual</p>
-          <p className="text-sm font-bold text-gray-700">{fmtM(ritmoActual)}<span className="text-[10px] font-normal text-gray-400">/día</span></p>
+          <p className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.55)' }}>Ritmo actual</p>
+          <p className="text-sm font-bold" style={{ color: '#fff' }}>{fmtM(ritmoActual)}<span className="text-[10px] font-normal" style={{ color: 'rgba(255,255,255,0.55)' }}>/día</span></p>
         </div>
         <div>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wide">Necesario</p>
-          <p className="text-sm font-bold" style={{ color }}>{fmtM(ritmoNecesario)}<span className="text-[10px] font-normal text-gray-400">/día</span></p>
+          <p className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.55)' }}>Necesario</p>
+          <p className="text-sm font-bold" style={{ color: '#fff' }}>{fmtM(ritmoNecesario)}<span className="text-[10px] font-normal" style={{ color: 'rgba(255,255,255,0.55)' }}>/día</span></p>
         </div>
       </div>
-      <p className="text-[10px] text-gray-400 mt-1">{diasRestantes} días restantes · día {diaHoy} de {diasTotalesMes}</p>
+      <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>{diasRestantes} días restantes · día {diaHoy} de {diasTotalesMes}</p>
     </div>
   )
 }
