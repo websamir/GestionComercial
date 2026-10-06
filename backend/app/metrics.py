@@ -707,8 +707,10 @@ def get_convenios_breakdown(df: pd.DataFrame) -> dict:
 
 def get_venta_directa(df: pd.DataFrame) -> dict:
     """
-    Ventas directas: todo lo que NO es convenio financiero (ADDI, PLATAM, DILO, VANTI, BRILLA).
-    Representa pagos en efectivo, tarjeta y transferencia.
+    Ventas directas (efectivo/tarjeta/transferencia):
+    - Origen=VENDEDOR (tienda física, no canal empresa)
+    - Y NO es convenio financiero (ADDI, PLATAM, DILO, VANTI, BRILLA)
+    Excluye Origen=CANAL (venta empresa a crédito) y todos los convenios.
     """
     sdf = _sales_df(df)
     if sdf.empty:
@@ -721,13 +723,14 @@ def get_venta_directa(df: pd.DataFrame) -> dict:
     mask_dilo   = pd.Series(False, index=sdf.index)
     mask_vanti  = pd.Series(False, index=sdf.index)
     mask_brilla = tipo_doc.str.startswith("G1A")
-
     mask_convenio = mask_addi | mask_platam | mask_dilo | mask_vanti | mask_brilla
-    seg = sdf[~mask_convenio]
 
-    total_sdf  = _safe_float(sdf["Valor Ventas Netas"].sum())
-    venta      = _safe_float(seg["Valor Ventas Netas"].sum())
-    utilidad   = _safe_float(seg["Valor Utilidad"].sum()) if "Valor Utilidad" in seg.columns else 0.0
+    # Solo tienda física (VENDEDOR) y sin convenio financiero
+    seg = sdf[(sdf["Origen"] == "VENDEDOR") & ~mask_convenio]
+
+    total_sdf = _safe_float(sdf["Valor Ventas Netas"].sum())
+    venta     = _safe_float(seg["Valor Ventas Netas"].sum())
+    utilidad  = _safe_float(seg["Valor Utilidad"].sum()) if "Valor Utilidad" in seg.columns else 0.0
 
     return {
         "total": round(venta, 2),
