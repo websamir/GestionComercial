@@ -17,6 +17,16 @@ def _sales_df(df: pd.DataFrame) -> pd.DataFrame:
     return df[df["Bodega"].notna()].copy()
 
 
+def _invoice_count(sdf: pd.DataFrame) -> int:
+    """Count distinct sales documents, excluding credit notes (Tipo Documento starts with NC)."""
+    if "Número Documento" not in sdf.columns:
+        return 0
+    if "Tipo Documento" not in sdf.columns:
+        return int(sdf["Número Documento"].nunique())
+    mask = ~sdf["Tipo Documento"].astype(str).str.upper().str.strip().str.startswith("NC")
+    return int(sdf.loc[mask, "Número Documento"].nunique())
+
+
 def _safe_float(val) -> float:
     """Convert to float, returning 0.0 for NaN/None."""
     try:
@@ -48,13 +58,16 @@ def get_sales_summary(df: pd.DataFrame) -> dict:
     unidades = _safe_float(sdf["Cantidad Venta Neta"].sum())
     margen_pct = _safe_pct(utilidad_total, venta_total)
 
-    # Distinct invoices by document number
-    facturas = int(sdf["Número Documento"].nunique()) if "Número Documento" in sdf.columns else 0
+    # Distinct invoices by document number (credit notes excluded)
+    facturas = _invoice_count(sdf)
 
     ticket_promedio = _safe_float(venta_total / facturas) if facturas > 0 else 0.0
 
-    # Items per invoice: average number of line items per invoice number
-    if facturas > 0 and "Número Documento" in sdf.columns:
+    # Items per invoice: line items from sales documents only (no NC)
+    if facturas > 0 and "Número Documento" in sdf.columns and "Tipo Documento" in sdf.columns:
+        mask_ventas = ~sdf["Tipo Documento"].astype(str).str.upper().str.strip().str.startswith("NC")
+        items_por_factura = round(len(sdf.loc[mask_ventas].dropna(subset=["Número Documento"])) / facturas, 2)
+    elif facturas > 0 and "Número Documento" in sdf.columns:
         items_por_factura = round(len(sdf.dropna(subset=["Número Documento"])) / facturas, 2)
     else:
         items_por_factura = 0.0
@@ -311,12 +324,18 @@ def get_daily_productivity(df: pd.DataFrame) -> dict:
             "clientes_dia": 0.0,
         }
 
-    facturas_total = sdf["Número Documento"].nunique()
+    facturas_total = _invoice_count(sdf)
     venta_total = _safe_float(sdf["Valor Ventas Netas"].sum())
     clientes_total = sdf["Tercero"].nunique()
 
     ticket_promedio = venta_total / facturas_total if facturas_total > 0 else 0.0
-    items_por_factura = len(sdf.dropna(subset=["Número Documento"])) / facturas_total if facturas_total > 0 else 0.0
+    if facturas_total > 0 and "Tipo Documento" in sdf.columns:
+        mask_ventas = ~sdf["Tipo Documento"].astype(str).str.upper().str.strip().str.startswith("NC")
+        items_por_factura = len(sdf.loc[mask_ventas].dropna(subset=["Número Documento"])) / facturas_total
+    elif facturas_total > 0:
+        items_por_factura = len(sdf.dropna(subset=["Número Documento"])) / facturas_total
+    else:
+        items_por_factura = 0.0
 
     return {
         "facturas_dia": round(facturas_total / dias, 2),
@@ -344,7 +363,7 @@ def get_vendor_list(df: pd.DataFrame) -> list[dict]:
         ppto = _safe_float(vrow["ppto"])
         venta = _safe_float(sdf["Valor Ventas Netas"].sum())
         utilidad = _safe_float(sdf["Valor Utilidad"].sum())
-        facturas = int(sdf["Número Documento"].nunique()) if not sdf.empty else 0
+        facturas = _invoice_count(sdf) if not sdf.empty else 0
         clientes = int(sdf["Tercero"].nunique()) if not sdf.empty else 0
 
         result.append({
@@ -433,7 +452,7 @@ def get_customer_metrics(df: pd.DataFrame) -> dict:
 
     venta_total = _safe_float(sdf["Valor Ventas Netas"].sum())
     clientes_total = int(sdf["Tercero"].nunique())
-    facturas = int(sdf["Número Documento"].nunique())
+    facturas = _invoice_count(sdf)
 
     venta_por_cliente = venta_total / clientes_total if clientes_total > 0 else 0.0
     ticket_promedio = venta_total / facturas if facturas > 0 else 0.0
@@ -513,7 +532,7 @@ def get_advisors_for_director(df: pd.DataFrame) -> list[dict]:
         ppto = _safe_float(vrow["ppto"])
         venta = _safe_float(sdf["Valor Ventas Netas"].sum()) if not sdf.empty else 0.0
         utilidad = _safe_float(sdf["Valor Utilidad"].sum()) if not sdf.empty else 0.0
-        facturas = int(sdf["Número Documento"].nunique()) if not sdf.empty else 0
+        facturas = _invoice_count(sdf) if not sdf.empty else 0
         clientes = int(sdf["Tercero"].nunique()) if not sdf.empty else 0
 
         # Days with sales for facturas_dia
@@ -522,7 +541,13 @@ def get_advisors_for_director(df: pd.DataFrame) -> list[dict]:
             dias = sdf["fecha_hora"].dropna().dt.date.nunique()
         facturas_dia = round(facturas / dias, 2) if dias > 0 else 0.0
         ticket_promedio = round(venta / facturas, 2) if facturas > 0 else 0.0
-        items_factura = round(len(sdf.dropna(subset=["Número Documento"])) / facturas, 2) if facturas > 0 else 0.0
+        if facturas > 0 and not sdf.empty and "Tipo Documento" in sdf.columns:
+            mask_ventas = ~sdf["Tipo Documento"].astype(str).str.upper().str.strip().str.startswith("NC")
+            items_factura = round(len(sdf.loc[mask_ventas].dropna(subset=["Número Documento"])) / facturas, 2)
+        elif facturas > 0 and not sdf.empty:
+            items_factura = round(len(sdf.dropna(subset=["Número Documento"])) / facturas, 2)
+        else:
+            items_factura = 0.0
 
         result.append({
             "cod_vend": int(cod) if pd.notna(cod) else None,
@@ -558,7 +583,7 @@ def get_store_breakdown(df: pd.DataFrame) -> list[dict]:
         ppto = _safe_float(area_df.groupby("cod_vend")["ppto"].first().sum())
         venta = _safe_float(area_sdf["Valor Ventas Netas"].sum()) if not area_sdf.empty else 0.0
         utilidad = _safe_float(area_sdf["Valor Utilidad"].sum()) if not area_sdf.empty else 0.0
-        facturas = int(area_sdf["Número Documento"].nunique()) if not area_sdf.empty else 0
+        facturas = _invoice_count(area_sdf) if not area_sdf.empty else 0
         asesores = int(df[df["desc_area"] == area]["cod_vend"].nunique())
 
         ticket = round(venta / facturas, 2) if facturas > 0 else 0.0
@@ -637,9 +662,15 @@ def get_top_advisors(df: pd.DataFrame, limit: int = 10) -> list[dict]:
         ppto = _safe_float(vrow["ppto"])
         venta = _safe_float(vdf["Valor Ventas Netas"].sum()) if not vdf.empty else 0.0
         utilidad = _safe_float(vdf["Valor Utilidad"].sum()) if not vdf.empty else 0.0
-        facturas = int(vdf["Número Documento"].nunique()) if not vdf.empty else 0
+        facturas = _invoice_count(vdf) if not vdf.empty else 0
         ticket = round(venta / facturas, 2) if facturas > 0 else 0.0
-        items = round(len(vdf.dropna(subset=["Número Documento"])) / facturas, 2) if facturas > 0 else 0.0
+        if facturas > 0 and not vdf.empty and "Tipo Documento" in vdf.columns:
+            mask_ventas = ~vdf["Tipo Documento"].astype(str).str.upper().str.strip().str.startswith("NC")
+            items = round(len(vdf.loc[mask_ventas].dropna(subset=["Número Documento"])) / facturas, 2)
+        elif facturas > 0 and not vdf.empty:
+            items = round(len(vdf.dropna(subset=["Número Documento"])) / facturas, 2)
+        else:
+            items = 0.0
         result.append({
             "cod_vend": int(cod) if pd.notna(cod) else None,
             "nombre": str(vrow["nombre"]) if pd.notna(vrow["nombre"]) else "",
@@ -833,10 +864,16 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
             vdf = seg[seg["cod_vend"] == cod]
             venta = _safe_float(vdf["Valor Ventas Netas"].sum())
             utilidad = _safe_float(vdf["Valor Utilidad"].sum())
-            facturas = int(vdf["Número Documento"].nunique())
+            facturas = _invoice_count(vdf)
             ppto = _safe_float(ppto_lookup.get(cod, 0))
             ticket = round(venta / facturas, 2) if facturas > 0 else 0.0
-            items = round(len(vdf.dropna(subset=["Número Documento"])) / facturas, 2) if facturas > 0 else 0.0
+            if facturas > 0 and "Tipo Documento" in vdf.columns:
+                mask_ventas = ~vdf["Tipo Documento"].astype(str).str.upper().str.strip().str.startswith("NC")
+                items = round(len(vdf.loc[mask_ventas].dropna(subset=["Número Documento"])) / facturas, 2)
+            elif facturas > 0:
+                items = round(len(vdf.dropna(subset=["Número Documento"])) / facturas, 2)
+            else:
+                items = 0.0
             result.append({
                 "cod_vend": int(cod) if pd.notna(cod) else None,
                 "nombre": str(vrow["nombre"]) if pd.notna(vrow["nombre"]) else "",
