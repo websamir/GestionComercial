@@ -616,7 +616,9 @@ export default function CompanyDashboard() {
           {/* ── Proyección + Canal de Venta ── */}
           {(() => {
             const canal = (data as any).canal_venta
+            const vd = (data as any).venta_directa
             const hayCanal = canal && (canal.virtual > 0 || canal.fisica > 0)
+            const hayVD = vd && vd.total > 0
             const venta = kpis?.venta_total ?? 0
             const meta = kpis?.meta_total ?? 0
             const faltan = kpis?.faltan ?? (meta > venta ? meta - venta : 0)
@@ -686,6 +688,18 @@ export default function CompanyDashboard() {
                         <p className="text-[10px] text-gray-400 font-semibold">{canal.pct_fisica.toFixed(1)}%</p>
                       </div>
                     </div>
+                  </div>
+                )}
+                {hayVD && (
+                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 min-w-[180px]">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Venta Directa</span>
+                    </div>
+                    <p className="text-xl font-bold text-gray-800">{fmtM(vd.total)}</p>
+                    <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">{vd.pct_del_total.toFixed(1)}% del total</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">Margen {vd.margen_pct.toFixed(1)}%</p>
+                    <p className="text-[10px] text-gray-300 mt-1.5">Efectivo · Tarjeta · Transferencia</p>
                   </div>
                 )}
               </div>

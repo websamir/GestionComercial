@@ -705,6 +705,37 @@ def get_convenios_breakdown(df: pd.DataFrame) -> dict:
     }
 
 
+def get_venta_directa(df: pd.DataFrame) -> dict:
+    """
+    Ventas directas: todo lo que NO es convenio financiero (ADDI, PLATAM, DILO, VANTI, BRILLA).
+    Representa pagos en efectivo, tarjeta y transferencia.
+    """
+    sdf = _sales_df(df)
+    if sdf.empty:
+        return {"total": 0.0, "margen_pct": 0.0, "pct_del_total": 0.0}
+
+    tipo_doc = sdf["Tipo Documento"].astype(str).str.upper().str.strip() if "Tipo Documento" in sdf.columns else pd.Series("", index=sdf.index)
+
+    mask_addi   = tipo_doc.isin(["FEWP", "NCWP"])
+    mask_platam = tipo_doc.isin(["FEWC", "NCWC"])
+    mask_dilo   = pd.Series(False, index=sdf.index)
+    mask_vanti  = pd.Series(False, index=sdf.index)
+    mask_brilla = tipo_doc.str.startswith("G1A")
+
+    mask_convenio = mask_addi | mask_platam | mask_dilo | mask_vanti | mask_brilla
+    seg = sdf[~mask_convenio]
+
+    total_sdf  = _safe_float(sdf["Valor Ventas Netas"].sum())
+    venta      = _safe_float(seg["Valor Ventas Netas"].sum())
+    utilidad   = _safe_float(seg["Valor Utilidad"].sum()) if "Valor Utilidad" in seg.columns else 0.0
+
+    return {
+        "total": round(venta, 2),
+        "margen_pct": round(_safe_pct(utilidad, venta), 1),
+        "pct_del_total": round(_safe_pct(venta, total_sdf), 1),
+    }
+
+
 def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
     """
     Top advisors split by the 5 fixed business channels.
