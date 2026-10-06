@@ -402,6 +402,24 @@ def get_sales_by_channel(df: pd.DataFrame) -> list[dict]:
     return []
 
 
+def get_virtual_vs_fisica(df: pd.DataFrame) -> dict:
+    """Total sales split: virtual warehouses vs physical warehouses."""
+    sdf = _sales_df(df)
+    if sdf.empty or "Bodega" not in sdf.columns:
+        return {"virtual": 0.0, "fisica": 0.0, "pct_virtual": 0.0, "pct_fisica": 0.0}
+    sdf = sdf.copy()
+    sdf["es_virtual"] = sdf["Bodega"].isin(VIRTUAL_BODEGAS)
+    virtual = _safe_float(sdf[sdf["es_virtual"]]["Valor Ventas Netas"].sum())
+    fisica = _safe_float(sdf[~sdf["es_virtual"]]["Valor Ventas Netas"].sum())
+    total = virtual + fisica
+    return {
+        "virtual": round(virtual, 2),
+        "fisica": round(fisica, 2),
+        "pct_virtual": round(virtual / total * 100, 1) if total > 0 else 0.0,
+        "pct_fisica": round(fisica / total * 100, 1) if total > 0 else 0.0,
+    }
+
+
 def get_customer_metrics(df: pd.DataFrame) -> dict:
     """Customer-level metrics."""
     sdf = _sales_df(df)

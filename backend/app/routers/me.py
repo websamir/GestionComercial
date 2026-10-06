@@ -87,6 +87,7 @@ async def my_dashboard(
         ],
         "distribucion_horaria": metrics.get_sales_by_hour(df),
         "convenios": metrics.get_convenios_breakdown(df),
+        "canal_venta": metrics.get_virtual_vs_fisica(df),
     }
 
 

@@ -344,29 +344,55 @@ export default function DirectorDashboard() {
               subtitle="Promedio de ítems" />
           </div>
 
-          {/* ── Convenios (sobre barra de cumplimiento) ── */}
+          {/* ── Convenios + Canal de venta (sobre barra de cumplimiento) ── */}
           {(() => {
             const conv = (data as any).convenios
-            if (!conv || conv.total === 0) return null
-            const items: { nombre: string; venta: number; margen_pct: number }[] = [
-              { nombre: 'TOTAL\nCONVENIOS', venta: conv.total, margen_pct: conv.margen_pct },
-              ...(conv.convenios ?? []),
-            ]
+            const canal = (data as any).canal_venta
+            const hayConv = conv && conv.total > 0
+            const hayCanal = canal && (canal.virtual > 0 || canal.fisica > 0)
+            if (!hayConv && !hayCanal) return null
+            const convItems: { nombre: string; venta: number; margen_pct: number }[] = hayConv
+              ? [{ nombre: 'TOTAL\nCONVENIOS', venta: conv.total, margen_pct: conv.margen_pct }, ...(conv.convenios ?? [])]
+              : []
             return (
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Convenios</span>
-                </div>
-                <div className="flex gap-4 overflow-x-auto">
-                  {items.map((c, i) => (
-                    <div key={c.nombre} className={`flex-shrink-0 ${i === 0 ? 'pr-4 border-r border-gray-100' : ''}`}>
-                      <p className="text-[10px] font-semibold text-gray-400 uppercase whitespace-pre-line leading-tight mb-0.5">{c.nombre}</p>
-                      <p className={`font-bold text-gray-800 ${i === 0 ? 'text-xl' : 'text-sm'}`}>{fmtM(c.venta)}</p>
-                      <p className="text-[10px] text-gray-400">Margen {c.margen_pct.toFixed(1)}%</p>
+              <div className="flex gap-3 flex-wrap">
+                {hayConv && (
+                  <div className="flex-1 min-w-[260px] bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Convenios</span>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex gap-4 overflow-x-auto">
+                      {convItems.map((c, i) => (
+                        <div key={c.nombre} className={`flex-shrink-0 ${i === 0 ? 'pr-4 border-r border-gray-100' : ''}`}>
+                          <p className="text-[10px] font-semibold text-gray-400 uppercase whitespace-pre-line leading-tight mb-0.5">{c.nombre}</p>
+                          <p className={`font-bold text-gray-800 ${i === 0 ? 'text-xl' : 'text-sm'}`}>{fmtM(c.venta)}</p>
+                          <p className="text-[10px] text-gray-400">Margen {c.margen_pct.toFixed(1)}%</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {hayCanal && (
+                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 min-w-[200px]">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Canal de Venta</span>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="pr-4 border-r border-gray-100">
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase leading-tight mb-0.5">Virtual</p>
+                        <p className="text-sm font-bold text-gray-800">{fmtM(canal.virtual)}</p>
+                        <p className="text-[10px] text-blue-500 font-semibold">{canal.pct_virtual.toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase leading-tight mb-0.5">Física</p>
+                        <p className="text-sm font-bold text-gray-800">{fmtM(canal.fisica)}</p>
+                        <p className="text-[10px] text-gray-400 font-semibold">{canal.pct_fisica.toFixed(1)}%</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )
           })()}
