@@ -189,7 +189,7 @@ export default function AsesorDashboard() {
               <p className="text-xs font-semibold uppercase tracking-widest text-white/50 mb-1">Vista general</p>
               <h1 className="text-2xl font-bold text-white leading-tight">¡Hola, {data.asesor.nombre ?? user?.nombre}!</h1>
               <p className="text-sm text-white/60 mt-0.5">
-                {data.asesor.tienda} · {rango === 'hoy' ? 'Datos de hoy' : `Últimos ${rango === '7d' ? '7' : rango === '15d' ? '15' : '30'} días`}
+                Cód. {data.asesor.cod_vend} · {data.asesor.tienda} · {rango === 'hoy' ? 'Datos de hoy' : `Últimos ${rango === '7d' ? '7' : rango === '15d' ? '15' : '30'} días`}
               </p>
               {syncedAt && <p className="text-blue-400/70 text-xs mt-0.5">Actualizado el {syncedAt}</p>}
             </div>
