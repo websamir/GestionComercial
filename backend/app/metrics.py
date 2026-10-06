@@ -660,7 +660,7 @@ def get_convenios_breakdown(df: pd.DataFrame) -> dict:
     # BRILLA: todos los G1A*
     mask_brilla = tipo_doc.str.startswith("G1A")
 
-    all_mask = mask_addi | mask_platam | mask_dilo | mask_g1a
+    all_mask = mask_addi | mask_platam | mask_dilo | mask_vanti | mask_brilla
     seg_all  = sdf[all_mask]
 
     total_venta = _safe_float(seg_all["Valor Ventas Netas"].sum())
