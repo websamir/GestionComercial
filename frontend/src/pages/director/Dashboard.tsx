@@ -94,13 +94,17 @@ function ProyeccionCard({ venta, meta, faltan, diasTrabajados }: {
   const diasRestantes = Math.max(diasTotalesMes - diaHoy, 0)
   const ritmoActual = diasTrabajados > 0 ? venta / diasTrabajados : 0
   const ritmoNecesario = diasRestantes > 0 ? faltan / diasRestantes : 0
-  const proyeccion = venta + ritmoActual * diasRestantes
+  // Si el ritmo actual no cubre el ritmo necesario, el día de hoy no alcanza → ajustar al día siguiente
+  const diasRestantesAjustados = (ritmoActual < ritmoNecesario && diasRestantes > 0) ? diasRestantes - 1 : diasRestantes
+  const proyeccion = venta + ritmoActual * diasRestantesAjustados
   const proyeccionPct = meta > 0 ? Math.min((proyeccion / meta) * 100, 999) : 0
-  const [bg, label, frase] = proyeccionPct >= 100
+  // Estado basado en ratio ritmoActual/ritmoNecesario para coincidir con el rango real de venta
+  const ratio = ritmoNecesario > 0 ? ritmoActual / ritmoNecesario : 1
+  const [bg, label, frase] = ratio >= 1.0
     ? ['#15803d', 'EN CAMINO',  '¡Excelente ritmo! La tienda va a cerrar el mes en meta.']
-    : proyeccionPct >= 80
+    : ratio >= 0.85
     ? ['#b45309', 'EN RIESGO',  'Falta poco, pero hay que acelerar. Cada venta cuenta.']
-    : proyeccionPct >= 60
+    : ratio >= 0.65
     ? ['#c2410c', 'ALERTA',     'Ritmo por debajo del esperado. Activa a tu equipo ahora.']
     : ['#b91c1c', 'CRÍTICO',    'La tienda necesita un impulso urgente para alcanzar la meta.']
   return (
@@ -123,7 +127,7 @@ function ProyeccionCard({ venta, meta, faltan, diasTrabajados }: {
           <p className="text-sm font-bold" style={{ color: '#fff' }}>{fmtM(ritmoNecesario)}<span className="text-[10px] font-normal" style={{ color: 'rgba(255,255,255,0.55)' }}>/día</span></p>
         </div>
       </div>
-      <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>{diasRestantes} días restantes · día {diaHoy} de {diasTotalesMes}</p>
+      <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>{diasRestantesAjustados} días restantes · día {diaHoy} de {diasTotalesMes}</p>
     </div>
   )
 }
