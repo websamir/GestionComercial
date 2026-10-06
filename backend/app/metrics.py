@@ -648,16 +648,17 @@ def get_convenios_breakdown(df: pd.DataFrame) -> dict:
     if sdf.empty:
         return {"total": 0.0, "margen_pct": 0.0, "convenios": []}
 
-    tercero  = sdf["Tercero"].astype(str).str.upper().str.strip()  if "Tercero"        in sdf.columns else pd.Series("", index=sdf.index)
     tipo_doc = sdf["Tipo Documento"].astype(str).str.upper().str.strip() if "Tipo Documento" in sdf.columns else pd.Series("", index=sdf.index)
-    bodega   = sdf["Bodega"].astype(str).str.strip()               if "Bodega"         in sdf.columns else pd.Series("", index=sdf.index)
 
-    mask_addi   = tercero == "FEWP"
-    mask_platam = tercero == "FEWC"
-    mask_dilo   = tercero == "FEWD"
-    mask_g1a    = tipo_doc.str.startswith("G1A")
-    mask_vanti  = mask_g1a & (bodega == "35")
-    mask_brilla = mask_g1a & (bodega != "35")
+    # ADDI: FEWP (ventas) + NCWP (devoluciones)
+    mask_addi   = tipo_doc.isin(["FEWP", "NCWP"])
+    # PLATAM: FEWC (ventas) + NCWC (devoluciones)
+    mask_platam = tipo_doc.isin(["FEWC", "NCWC"])
+    # DILO y VANTI: sin datos aún
+    mask_dilo   = pd.Series(False, index=sdf.index)
+    mask_vanti  = pd.Series(False, index=sdf.index)
+    # BRILLA: todos los G1A*
+    mask_brilla = tipo_doc.str.startswith("G1A")
 
     all_mask = mask_addi | mask_platam | mask_dilo | mask_g1a
     seg_all  = sdf[all_mask]
