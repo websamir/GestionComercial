@@ -613,6 +613,85 @@ export default function CompanyDashboard() {
             />
           </div>
 
+          {/* ── Proyección + Canal de Venta ── */}
+          {(() => {
+            const canal = (data as any).canal_venta
+            const hayCanal = canal && (canal.virtual > 0 || canal.fisica > 0)
+            const venta = kpis?.venta_total ?? 0
+            const meta = kpis?.meta_total ?? 0
+            const faltan = kpis?.faltan ?? (meta > venta ? meta - venta : 0)
+            const today = new Date()
+            const year = today.getFullYear()
+            const month = today.getMonth() + 1
+            const diasTotalesMes = new Date(year, month, 0).getDate()
+            const diaHoy = today.getDate()
+            const labTranscurridos = Math.max(
+              Array.from({ length: diaHoy }, (_, i) => new Date(year, month - 1, i + 1).getDay() !== 0 ? 1 : 0).reduce((a: number, b: number) => a + b, 0), 1
+            )
+            const labRestantes = Array.from(
+              { length: diasTotalesMes - diaHoy }, (_, i) => new Date(year, month - 1, diaHoy + 1 + i).getDay() !== 0 ? 1 : 0
+            ).reduce((a: number, b: number) => a + b, 0)
+            const ritmoActual = venta / labTranscurridos
+            const ritmoNecesario = labRestantes > 0 ? faltan / labRestantes : 0
+            const diasRestAjust = (ritmoActual < ritmoNecesario && labRestantes > 0) ? labRestantes - 1 : labRestantes
+            const proyeccion = venta + ritmoActual * diasRestAjust
+            const proyeccionPct = meta > 0 ? Math.min((proyeccion / meta) * 100, 999) : 0
+            const ratio = ritmoNecesario > 0 ? ritmoActual / ritmoNecesario : 1
+            const [bg, label, frase] = ratio >= 1.0
+              ? ['#15803d', 'EN CAMINO',  'La empresa va a cerrar el mes en meta. ¡Mantener el ritmo!']
+              : ratio >= 0.85
+              ? ['#b45309', 'EN RIESGO',  'Falta poco, pero hay que acelerar. Cada venta cuenta.']
+              : ratio >= 0.65
+              ? ['#c2410c', 'ALERTA',     'Ritmo por debajo del esperado. Activar todas las tiendas.']
+              : ['#b91c1c', 'CRÍTICO',    'La empresa necesita un impulso urgente para alcanzar la meta.']
+            return (
+              <div className="flex gap-3 flex-wrap">
+                {meta > 0 && (
+                  <div className="col-span-2 rounded-xl p-4 flex flex-col justify-between flex-1 min-w-[260px]" style={{ background: bg }}>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.65)' }}>Proyección de Cierre</p>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}>{label}</span>
+                    </div>
+                    <p className="text-3xl font-bold leading-none mt-1" style={{ color: '#fff' }}>{proyeccionPct.toFixed(1)}%</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>al ritmo actual → {fmtM(proyeccion)}</p>
+                    <p className="text-[11px] font-medium mt-1.5 leading-snug" style={{ color: 'rgba(255,255,255,0.85)' }}>{frase}</p>
+                    <div className="grid grid-cols-2 gap-2 mt-3 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.55)' }}>Ritmo actual</p>
+                        <p className="text-sm font-bold" style={{ color: '#fff' }}>{fmtM(ritmoActual)}<span className="text-[10px] font-normal" style={{ color: 'rgba(255,255,255,0.55)' }}>/día</span></p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.55)' }}>Necesario</p>
+                        <p className="text-sm font-bold" style={{ color: '#fff' }}>{fmtM(ritmoNecesario)}<span className="text-[10px] font-normal" style={{ color: 'rgba(255,255,255,0.55)' }}>/día</span></p>
+                      </div>
+                    </div>
+                    <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>{diasRestAjust} días lab. restantes · día {diaHoy} de {diasTotalesMes}</p>
+                  </div>
+                )}
+                {hayCanal && (
+                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 min-w-[200px]">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Canal de Venta</span>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="pr-4 border-r border-gray-100">
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase leading-tight mb-0.5">Virtual</p>
+                        <p className="text-sm font-bold text-gray-800">{fmtM(canal.virtual)}</p>
+                        <p className="text-[10px] text-blue-500 font-semibold">{canal.pct_virtual.toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase leading-tight mb-0.5">Física</p>
+                        <p className="text-sm font-bold text-gray-800">{fmtM(canal.fisica)}</p>
+                        <p className="text-[10px] text-gray-400 font-semibold">{canal.pct_fisica.toFixed(1)}%</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+
           {/* ── Charts row ── */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             {/* Line chart - Evolución */}

@@ -67,6 +67,7 @@ async def company_dashboard(
             "clientes": summary["clientes"],
             "ticket_promedio": summary["ticket_promedio"],
             "items_factura": summary["items_por_factura"],
+            "faltan": summary.get("faltante", 0),
         },
         "canales": metrics.get_channel_breakdown(df),
         "tiendas": metrics.get_store_breakdown(df),
@@ -77,6 +78,7 @@ async def company_dashboard(
         "top_tienda_virtual_edo": tops["tienda_virtual_edo"],
         "top_ebusiness": tops["ebusiness"],
         "convenios": convenios,
+        "canal_venta": metrics.get_virtual_vs_fisica(df),
         "marcas_canales": marcas_canal,
         "marcas": [
             {"marca": b["descripcion_grupo"], "venta": b["venta"], "participacion": b["participacion_pct"]}
