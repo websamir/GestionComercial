@@ -27,6 +27,7 @@ export default function AccessControlPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterRol, setFilterRol] = useState('todos')
+  const [filterTienda, setFilterTienda] = useState('todas')
   const [page, setPage] = useState(1)
   const PAGE_SIZE = 10
 
@@ -44,11 +45,16 @@ export default function AccessControlPage() {
 
   if (loading) return <LoadingSpinner fullScreen />
 
+  const tiendas: string[] = Array.from(
+    new Set((data?.usuarios ?? []).map((u: any) => u.desc_area).filter(Boolean))
+  ).sort() as string[]
+
   const usuariosFiltrados: any[] = (data?.usuarios ?? []).filter((u: any) => {
     const q = search.toLowerCase()
     return (
       (u.nombre?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)) &&
-      (filterRol === 'todos' || u.rol === filterRol)
+      (filterRol === 'todos' || u.rol === filterRol) &&
+      (filterTienda === 'todas' || u.desc_area === filterTienda)
     )
   })
   const totalPages = Math.max(1, Math.ceil(usuariosFiltrados.length / PAGE_SIZE))
@@ -107,6 +113,11 @@ export default function AccessControlPage() {
               className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
               <option value="todos">Todos los roles</option>
               {ROL_OPTIONS.map((r) => <option key={r} value={r}>{ROL_LABEL[r]}</option>)}
+            </select>
+            <select value={filterTienda} onChange={(e) => { setFilterTienda(e.target.value); setPage(1) }}
+              className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+              <option value="todas">Todas las tiendas</option>
+              {tiendas.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
             <span className="self-center text-xs text-gray-400">{usuariosFiltrados.length} usuarios</span>
           </div>
