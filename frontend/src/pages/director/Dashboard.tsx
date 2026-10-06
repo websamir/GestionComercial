@@ -275,23 +275,35 @@ export default function DirectorDashboard() {
           </div>
 
           {/* ── Cumplimiento bar ── */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-xs text-gray-500">
-                Meta: <span className="font-semibold text-gray-700">{formatCOP(kpis?.meta ?? 0)}</span>
-                <span className="mx-2">·</span>
-                Alcanzado: <span className="font-semibold text-gray-700">{formatCOP(kpis?.venta ?? 0)}</span>
+          {(() => {
+            const [bg, border, pill, pillTxt] = cumplPct >= 80
+              ? ['bg-green-50',  'border-l-4 border-green-500',  'bg-green-100 text-green-700',  '● EN META']
+              : cumplPct >= 60
+              ? ['bg-amber-50',  'border-l-4 border-amber-400',  'bg-amber-100 text-amber-700',  '● EN RIESGO']
+              : ['bg-red-50',    'border-l-4 border-red-400',    'bg-red-100 text-red-700',      '● CRÍTICO']
+            return (
+              <div className={`${bg} ${border} rounded-xl shadow-sm p-4`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs text-gray-500">
+                    Meta: <span className="font-semibold text-gray-700">{formatCOP(kpis?.meta ?? 0)}</span>
+                    <span className="mx-2">·</span>
+                    Alcanzado: <span className="font-semibold text-gray-700">{formatCOP(kpis?.venta ?? 0)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${pill}`}>{pillTxt}</span>
+                    <span className={`text-sm font-bold ${getCumplColor(cumplPct)}`}>{cumplPct.toFixed(1)}%</span>
+                  </div>
+                </div>
+                <div className="w-full h-2.5 bg-white/60 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${cumplPct >= 80 ? 'bg-green-500' : cumplPct >= 60 ? 'bg-amber-400' : 'bg-red-400'}`}
+                    style={{ width: `${cumplWidth}%` }}
+                  />
+                </div>
+                <p className={`text-xs mt-1.5 font-medium ${getCumplColor(cumplPct)}`}>Faltan: {formatCOP(kpis?.faltan ?? 0)}</p>
               </div>
-              <span className={`text-sm font-bold ${getCumplColor(cumplPct)}`}>{cumplPct.toFixed(1)}%</span>
-            </div>
-            <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${cumplPct >= 80 ? 'bg-green-500' : cumplPct >= 60 ? 'bg-amber-400' : 'bg-red-400'}`}
-                style={{ width: `${cumplWidth}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-400 mt-1.5">Faltan: {formatCOP(kpis?.faltan ?? 0)}</p>
-          </div>
+            )
+          })()}
 
           {/* ── Evolución diaria ── */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
