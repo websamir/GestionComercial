@@ -96,13 +96,13 @@ function ProyeccionCard({ venta, meta, faltan, diasTrabajados }: {
   const ritmoNecesario = diasRestantes > 0 ? faltan / diasRestantes : 0
   const proyeccion = venta + ritmoActual * diasRestantes
   const proyeccionPct = meta > 0 ? Math.min((proyeccion / meta) * 100, 999) : 0
-  const [bg, label] = proyeccionPct >= 100
-    ? ['#15803d', 'EN CAMINO']
+  const [bg, label, frase] = proyeccionPct >= 100
+    ? ['#15803d', 'EN CAMINO',  '¡Excelente ritmo! La tienda va a cerrar el mes en meta.']
     : proyeccionPct >= 80
-    ? ['#b45309', 'EN RIESGO']
+    ? ['#b45309', 'EN RIESGO',  'Falta poco, pero hay que acelerar. Cada venta cuenta.']
     : proyeccionPct >= 60
-    ? ['#c2410c', 'ALERTA']
-    : ['#b91c1c', 'CRÍTICO']
+    ? ['#c2410c', 'ALERTA',     'Ritmo por debajo del esperado. Activa a tu equipo ahora.']
+    : ['#b91c1c', 'CRÍTICO',    'La tienda necesita un impulso urgente para alcanzar la meta.']
   return (
     <div className="col-span-2 rounded-xl p-4 flex flex-col justify-between"
       style={{ background: bg }}>
@@ -112,6 +112,7 @@ function ProyeccionCard({ venta, meta, faltan, diasTrabajados }: {
       </div>
       <p className="text-3xl font-bold leading-none mt-1" style={{ color: '#fff' }}>{proyeccionPct.toFixed(1)}%</p>
       <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>al ritmo actual → {fmtM(proyeccion)}</p>
+      <p className="text-[11px] font-medium mt-1.5 leading-snug" style={{ color: 'rgba(255,255,255,0.85)' }}>{frase}</p>
       <div className="grid grid-cols-2 gap-2 mt-3 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
         <div>
           <p className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.55)' }}>Ritmo actual</p>
