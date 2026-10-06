@@ -27,6 +27,8 @@ export default function AccessControlPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterRol, setFilterRol] = useState('todos')
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 10
 
   useEffect(() => {
     getAccessControl()
@@ -42,13 +44,16 @@ export default function AccessControlPage() {
 
   if (loading) return <LoadingSpinner fullScreen />
 
-  const usuarios: any[] = (data?.usuarios ?? []).filter((u: any) => {
+  const usuariosFiltrados: any[] = (data?.usuarios ?? []).filter((u: any) => {
     const q = search.toLowerCase()
     return (
       (u.nombre?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)) &&
       (filterRol === 'todos' || u.rol === filterRol)
     )
   })
+  const totalPages = Math.max(1, Math.ceil(usuariosFiltrados.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const usuarios = usuariosFiltrados.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   const totalIngresos = (data?.usuarios ?? []).reduce((s: number, u: any) => s + (u.total_ingresos || 0), 0)
 
@@ -94,19 +99,19 @@ export default function AccessControlPage() {
           {/* Filters */}
           <div className="flex flex-wrap gap-2 mb-4">
             <input
-              type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+              type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }}
               placeholder="Buscar usuario..."
               className="flex-1 min-w-[180px] px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
-            <select value={filterRol} onChange={(e) => setFilterRol(e.target.value)}
+            <select value={filterRol} onChange={(e) => { setFilterRol(e.target.value); setPage(1) }}
               className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
               <option value="todos">Todos los roles</option>
               {ROL_OPTIONS.map((r) => <option key={r} value={r}>{ROL_LABEL[r]}</option>)}
             </select>
-            <span className="self-center text-xs text-gray-400">{usuarios.length} usuarios</span>
+            <span className="self-center text-xs text-gray-400">{usuariosFiltrados.length} usuarios</span>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" style={{ maxHeight: '480px', overflowY: 'auto' }}>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100">
@@ -165,6 +170,44 @@ export default function AccessControlPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+              <span className="text-xs text-gray-400">
+                Mostrando {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, usuariosFiltrados.length)} de {usuariosFiltrados.length} usuarios
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="px-2 py-1 text-xs rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  ←
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setPage(n)}
+                    className={`w-7 h-7 text-xs rounded-lg font-medium transition-colors ${
+                      n === currentPage
+                        ? 'bg-blue-600 text-white'
+                        : 'border border-gray-200 text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="px-2 py-1 text-xs rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  →
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
