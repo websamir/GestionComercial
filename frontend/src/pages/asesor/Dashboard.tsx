@@ -83,6 +83,51 @@ function NewKPICard({ title, value, subtitle, iconKey }: {
   )
 }
 
+// ─── Proyección de cierre ────────────────────────────────────────────────────
+
+function ProyeccionCard({ venta, meta, faltan, diasTrabajados }: {
+  venta: number; meta: number; faltan: number; diasTrabajados: number
+}) {
+  const today = new Date()
+  const diasTotalesMes = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
+  const diaHoy = today.getDate()
+  const diasRestantes = Math.max(diasTotalesMes - diaHoy, 0)
+  const ritmoActual = diasTrabajados > 0 ? venta / diasTrabajados : 0
+  const ritmoNecesario = diasRestantes > 0 ? faltan / diasRestantes : 0
+  const proyeccion = venta + ritmoActual * diasRestantes
+  const proyeccionPct = meta > 0 ? Math.min((proyeccion / meta) * 100, 999) : 0
+  const [color, label] = proyeccionPct >= 100
+    ? ['#16a34a', '● EN CAMINO']
+    : proyeccionPct >= 80
+    ? ['#d97706', '● EN RIESGO']
+    : proyeccionPct >= 60
+    ? ['#ea580c', '● ALERTA']
+    : ['#dc2626', '● CRÍTICO']
+  return (
+    <div className="col-span-2 rounded-xl shadow-sm p-4 flex flex-col justify-between"
+      style={{ borderBottom: `3px solid ${color}`, background: `${color}0f` }}>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Proyección de Cierre</p>
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+          style={{ background: `${color}20`, color }}>{label}</span>
+      </div>
+      <p className="text-2xl font-bold text-gray-900 leading-none">{proyeccionPct.toFixed(1)}%</p>
+      <p className="text-[10px] text-gray-400 mt-0.5">al ritmo actual → {fmtM(proyeccion)}</p>
+      <div className="grid grid-cols-2 gap-2 mt-2">
+        <div>
+          <p className="text-[10px] text-gray-400 uppercase tracking-wide">Ritmo actual</p>
+          <p className="text-sm font-bold text-gray-700">{fmtM(ritmoActual)}<span className="text-[10px] font-normal text-gray-400">/día</span></p>
+        </div>
+        <div>
+          <p className="text-[10px] text-gray-400 uppercase tracking-wide">Necesario</p>
+          <p className="text-sm font-bold" style={{ color }}>{fmtM(ritmoNecesario)}<span className="text-[10px] font-normal text-gray-400">/día</span></p>
+        </div>
+      </div>
+      <p className="text-[10px] text-gray-400 mt-1">{diasRestantes} días restantes · día {diaHoy} de {diasTotalesMes}</p>
+    </div>
+  )
+}
+
 // ─── Pie/donut shared helpers ─────────────────────────────────────────────────
 
 const PIE_COLORS = ['#1e40af','#1d4ed8','#2563eb','#3b82f6','#60a5fa','#93c5fd','#bfdbfe','#dbeafe']
@@ -204,7 +249,7 @@ export default function AsesorDashboard() {
             </div>
           </div>
 
-          {/* ── KPI cards ── */}
+          {/* ── KPI cards principales + Proyección ── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
             <NewKPICard iconKey="venta"    title="Venta"         value={fmtM(kpis?.venta ?? 0)} />
             <NewKPICard iconKey="meta"     title="Meta"          value={fmtM(kpis?.meta ?? 0)}
@@ -219,12 +264,22 @@ export default function AsesorDashboard() {
             <NewKPICard iconKey="fact"     title="Facturas"      value={String(kpis?.facturas ?? 0)}
               subtitle={`${(kpis?.facturas_dia ?? 0).toFixed(1)} fact/día`} />
             <NewKPICard iconKey="clientes" title="Clientes"      value={String(kpis?.clientes ?? 0)} />
-            <NewKPICard iconKey="ticket"      title="Ticket $"     value={fmtM(kpis?.ticket_promedio ?? 0)}
+            <ProyeccionCard
+              venta={kpis?.venta ?? 0}
+              meta={kpis?.meta ?? 0}
+              faltan={kpis?.faltan ?? 0}
+              diasTrabajados={kpis?.dias_trabajados ?? 1}
+            />
+          </div>
+
+          {/* ── KPI cards secundarias ── */}
+          <div className="grid grid-cols-3 gap-3">
+            <NewKPICard iconKey="unidades"   title="Unidades"       value={String(kpis?.unidades ?? 0)} />
+            <NewKPICard iconKey="ticket"     title="Ticket $"       value={fmtM(kpis?.ticket_promedio ?? 0)}
               subtitle="Valor / factura" />
             <NewKPICard iconKey="ticketitem" title="Ítems / Ticket"
               value={(kpis?.items_factura ?? 0).toFixed(2)}
               subtitle="Promedio de ítems" />
-            <NewKPICard iconKey="unidades" title="Unidades"      value={String(kpis?.unidades ?? 0)} />
           </div>
 
           {/* ── Cumplimiento bar ── */}
