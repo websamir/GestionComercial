@@ -162,6 +162,49 @@ function CanalCard({ canal, venta, cumplimiento, margen_pct, spark }: {
   )
 }
 
+// ─── Convenios card ──────────────────────────────────────────────────────────
+
+interface ConvenioItem { nombre: string; venta: number; margen_pct: number }
+
+function ConveniosCard({ venta, cumplimiento, margen_pct, spark, convenios }: {
+  venta: number; cumplimiento: number; margen_pct: number; spark: SparkPoint[]
+  convenios: ConvenioItem[]
+}) {
+  const cumplOk = cumplimiento >= 80
+  const cols: ConvenioItem[] = [
+    { nombre: 'TOTAL\nCONVENIOS', venta, margen_pct },
+    ...convenios,
+  ]
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-purple-500 flex-shrink-0" />
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Convenios</span>
+        </div>
+        <span className={`text-xs font-bold ${cumplOk ? 'text-green-600' : 'text-red-500'}`}>
+          Cumpl. {cumplimiento.toFixed(1)}%
+        </span>
+      </div>
+
+      {/* Desglose por convenio */}
+      <div className="flex gap-3 overflow-x-auto pb-1 mb-2">
+        {cols.map((c, i) => (
+          <div key={c.nombre} className={`flex-shrink-0 ${i === 0 ? 'pr-3 border-r border-gray-100' : ''}`}>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase whitespace-pre-line leading-tight mb-0.5">
+              {c.nombre}
+            </p>
+            <p className={`font-bold text-gray-800 ${i === 0 ? 'text-xl' : 'text-sm'}`}>{fmtM(c.venta)}</p>
+            <p className="text-[10px] text-gray-400">Margen {c.margen_pct.toFixed(1)}%</p>
+          </div>
+        ))}
+      </div>
+
+      <Sparkline data={spark} color="#8B5CF6" />
+    </div>
+  )
+}
+
 // ─── Pie chart labels ─────────────────────────────────────────────────────────
 
 const PIE_COLORS = ['#1e40af','#1d4ed8','#2563eb','#3b82f6','#60a5fa','#93c5fd','#bfdbfe','#dbeafe']
@@ -668,16 +711,31 @@ export default function CompanyDashboard() {
 
           {/* ── Canal mini-cards ── */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {(data.canales ?? []).slice(0, 3).map(c => (
-              <CanalCard
-                key={c.canal}
-                canal={c.canal}
-                venta={c.venta}
-                cumplimiento={c.cumplimiento}
-                margen_pct={c.margen_pct}
-                spark={canalSpark(c.canal)}
-              />
-            ))}
+            {(data.canales ?? []).slice(0, 3).map(c => {
+              if (c.canal === 'Convenios') {
+                const convData = (data as any).convenios
+                return (
+                  <ConveniosCard
+                    key={c.canal}
+                    venta={c.venta}
+                    cumplimiento={c.cumplimiento}
+                    margen_pct={c.margen_pct}
+                    spark={canalSpark(c.canal)}
+                    convenios={convData?.convenios ?? []}
+                  />
+                )
+              }
+              return (
+                <CanalCard
+                  key={c.canal}
+                  canal={c.canal}
+                  venta={c.venta}
+                  cumplimiento={c.cumplimiento}
+                  margen_pct={c.margen_pct}
+                  spark={canalSpark(c.canal)}
+                />
+              )
+            })}
           </div>
 
           {/* ── Tables row: Tiendas + Top Asesores (sin Venta Empresa) ── */}

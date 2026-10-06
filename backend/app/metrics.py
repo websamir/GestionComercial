@@ -640,51 +640,49 @@ def get_top_advisors(df: pd.DataFrame, limit: int = 10) -> list[dict]:
 
 def get_convenios_breakdown(df: pd.DataFrame) -> dict:
     """
-    Convenios (Compra Eficiente) breakdown by client company.
-    Segments the CONVENIOS rows and groups by Nombre Tercero.
+    Convenios breakdown by named partner.
+    ADDI=FEWP, PLATAM=FEWC, DILO=FEWD (por Tercero).
+    VANTI=G1A*+Bodega35, BRILLA=G1A*+Bodega≠35 (por Tipo Documento).
     """
     sdf = _sales_df(df)
     if sdf.empty:
-        return {"total": 0.0, "participacion_top": 0.0, "empresas": []}
+        return {"total": 0.0, "margen_pct": 0.0, "convenios": []}
 
-    tipo = sdf["Descripción Tipo"].fillna("")
-    seg = sdf[tipo.str.contains("CONVENIOS", case=False)]
+    tercero  = sdf["Tercero"].astype(str).str.upper().str.strip()  if "Tercero"        in sdf.columns else pd.Series("", index=sdf.index)
+    tipo_doc = sdf["Tipo Documento"].astype(str).str.upper().str.strip() if "Tipo Documento" in sdf.columns else pd.Series("", index=sdf.index)
+    bodega   = sdf["Bodega"].astype(str).str.strip()               if "Bodega"         in sdf.columns else pd.Series("", index=sdf.index)
 
-    if seg.empty:
-        return {"total": 0.0, "participacion_top": 0.0, "empresas": []}
+    mask_addi   = tercero == "FEWP"
+    mask_platam = tercero == "FEWC"
+    mask_dilo   = tercero == "FEWD"
+    mask_g1a    = tipo_doc.str.startswith("G1A")
+    mask_vanti  = mask_g1a & (bodega == "35")
+    mask_brilla = mask_g1a & (bodega != "35")
 
-    total_venta = _safe_float(seg["Valor Ventas Netas"].sum())
-    total_facturas = int(seg["Número Documento"].nunique())
+    all_mask = mask_addi | mask_platam | mask_dilo | mask_g1a
+    seg_all  = sdf[all_mask]
 
-    # Group by Tipo Documento + Descripción Tipo — gives one row per convenio contract
-    group_cols = ["Tipo Documento", "Descripción Tipo"] if "Tipo Documento" in seg.columns else ["Descripción Tipo"]
-    grouped = seg.groupby(group_cols, dropna=False).agg(
-        venta=("Valor Ventas Netas", "sum"),
-        facturas=("Número Documento", "nunique"),
-        clientes=("Tercero", "nunique"),
-    ).reset_index()
+    total_venta = _safe_float(seg_all["Valor Ventas Netas"].sum())
+    total_util  = _safe_float(seg_all["Valor Utilidad"].sum()) if "Valor Utilidad" in seg_all.columns else 0.0
 
-    barras = []
-    for _, row in grouped.iterrows():
-        venta = _safe_float(row["venta"])
-        facturas = int(row["facturas"])
-        clientes = int(row["clientes"])
-        raw = str(row["Descripción Tipo"]) if pd.notna(row["Descripción Tipo"]) else "Sin tipo"
-        nombre = raw.replace("FAC CONVENIOS ", "").replace("DEVOLUCION CREDITO CONVENIOS", "DEVOLUCIÓN").strip().title()
-        barras.append({
-            "nombre": nombre,
-            "venta": round(venta, 2),
-            "facturas": facturas,
-            "clientes": clientes,
-            "participacion_pct": _safe_pct(venta, total_venta),
-        })
-
-    barras.sort(key=lambda x: x["venta"], reverse=True)
+    def _metrics(mask):
+        seg = sdf[mask]
+        if seg.empty:
+            return {"venta": 0.0, "margen_pct": 0.0}
+        v = _safe_float(seg["Valor Ventas Netas"].sum())
+        u = _safe_float(seg["Valor Utilidad"].sum()) if "Valor Utilidad" in seg.columns else 0.0
+        return {"venta": round(v, 2), "margen_pct": round(_safe_pct(u, v), 1)}
 
     return {
         "total": round(total_venta, 2),
-        "facturas": total_facturas,
-        "barras": barras,
+        "margen_pct": round(_safe_pct(total_util, total_venta), 1),
+        "convenios": [
+            {"nombre": "ADDI",   **_metrics(mask_addi)},
+            {"nombre": "PLATAM", **_metrics(mask_platam)},
+            {"nombre": "DILO",   **_metrics(mask_dilo)},
+            {"nombre": "VANTI",  **_metrics(mask_vanti)},
+            {"nombre": "BRILLA", **_metrics(mask_brilla)},
+        ],
     }
 
 
