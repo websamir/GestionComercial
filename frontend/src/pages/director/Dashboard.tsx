@@ -85,17 +85,28 @@ function NewKPICard({ title, value, subtitle, iconKey }: {
 
 // ─── Proyección de cierre ────────────────────────────────────────────────────
 
-function ProyeccionCard({ venta, meta, faltan, diasTrabajados }: {
-  venta: number; meta: number; faltan: number; diasTrabajados: number
+function diasLaborales(year: number, month: number, desde: number, hasta: number) {
+  let count = 0
+  for (let d = desde; d <= hasta; d++) {
+    if (new Date(year, month - 1, d).getDay() !== 0) count++
+  }
+  return count
+}
+
+function ProyeccionCard({ venta, meta, faltan }: {
+  venta: number; meta: number; faltan: number; diasTrabajados?: number
 }) {
   const today = new Date()
-  const diasTotalesMes = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
+  const year = today.getFullYear()
+  const month = today.getMonth() + 1
+  const diasTotalesMes = new Date(year, month, 0).getDate()
   const diaHoy = today.getDate()
-  const diasRestantes = Math.max(diasTotalesMes - diaHoy, 0)
-  const ritmoActual = diasTrabajados > 0 ? venta / diasTrabajados : 0
-  const ritmoNecesario = diasRestantes > 0 ? faltan / diasRestantes : 0
+  const labTranscurridos = Math.max(diasLaborales(year, month, 1, diaHoy), 1)
+  const labRestantes = diasLaborales(year, month, diaHoy + 1, diasTotalesMes)
+  const ritmoActual = venta / labTranscurridos
+  const ritmoNecesario = labRestantes > 0 ? faltan / labRestantes : 0
   // Si el ritmo actual no cubre el ritmo necesario, el día de hoy no alcanza → ajustar al día siguiente
-  const diasRestantesAjustados = (ritmoActual < ritmoNecesario && diasRestantes > 0) ? diasRestantes - 1 : diasRestantes
+  const diasRestantesAjustados = (ritmoActual < ritmoNecesario && labRestantes > 0) ? labRestantes - 1 : labRestantes
   const proyeccion = venta + ritmoActual * diasRestantesAjustados
   const proyeccionPct = meta > 0 ? Math.min((proyeccion / meta) * 100, 999) : 0
   // Estado basado en ratio ritmoActual/ritmoNecesario para coincidir con el rango real de venta
@@ -127,7 +138,7 @@ function ProyeccionCard({ venta, meta, faltan, diasTrabajados }: {
           <p className="text-sm font-bold" style={{ color: '#fff' }}>{fmtM(ritmoNecesario)}<span className="text-[10px] font-normal" style={{ color: 'rgba(255,255,255,0.55)' }}>/día</span></p>
         </div>
       </div>
-      <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>{diasRestantesAjustados} días restantes · día {diaHoy} de {diasTotalesMes}</p>
+      <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>{diasRestantesAjustados} días lab. restantes · día {diaHoy} de {diasTotalesMes}</p>
     </div>
   )
 }
