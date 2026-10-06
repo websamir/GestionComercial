@@ -717,9 +717,9 @@ export default function CompanyDashboard() {
                 return (
                   <ConveniosCard
                     key={c.canal}
-                    venta={c.venta}
+                    venta={convData?.total ?? c.venta}
                     cumplimiento={c.cumplimiento}
-                    margen_pct={c.margen_pct}
+                    margen_pct={convData?.margen_pct ?? c.margen_pct}
                     spark={canalSpark(c.canal)}
                     convenios={convData?.convenios ?? []}
                   />
