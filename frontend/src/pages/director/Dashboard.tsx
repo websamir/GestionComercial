@@ -240,6 +240,11 @@ export default function DirectorDashboard() {
             <NewKPICard iconKey="venta"    title="Venta Tienda"   value={fmtM(kpis?.venta ?? 0)} />
             <NewKPICard iconKey="meta"     title="Meta"           value={fmtM(kpis?.meta ?? 0)}
               subtitle={`Cumpl. ${cumplPct.toFixed(1)}%`} />
+            {(() => { const c = (data as any).convenios; return c?.total > 0 ? (
+              <NewKPICard iconKey="venta" title="Convenios"
+                value={fmtM(c.total)}
+                subtitle={`Margen ${(c.margen_pct ?? 0).toFixed(1)}%`} />
+            ) : null })()}
             <NewKPICard iconKey="margen"   title="Margen %"       value={`${(kpis?.margen_pct ?? 0).toFixed(1)}%`}
               subtitle={formatCOP(kpis?.margen_cop ?? 0)} />
             <NewKPICard iconKey="fact"     title="Facturas"       value={String(kpis?.facturas ?? 0)}
