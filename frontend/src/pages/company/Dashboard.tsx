@@ -400,10 +400,25 @@ export default function CompanyDashboard() {
   const [prevData, setPrevData] = useState<CompanyDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [syncedAt, setSyncedAt] = useState<string | null>(null)
 
   const MESES_LONG = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
   const [y, m] = periodo.split('-').map(Number)
   const periodoLabel = `${MESES_LONG[m - 1]} ${y}`
+
+  useEffect(() => {
+    const apiBase = import.meta.env.VITE_API_URL ?? '/api'
+    const healthUrl = apiBase.replace(/\/api$/, '') + '/health'
+    fetch(healthUrl).then(r => r.json()).then(h => {
+      const at = h?.excel_status?.loaded_at
+      if (at) {
+        const d = new Date(at + 'Z')
+        const fmt = d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Bogota' })
+        const hr = d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' })
+        setSyncedAt(`${fmt} a las ${hr}`)
+      }
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -496,6 +511,9 @@ export default function CompanyDashboard() {
                 {rango === 'hoy' ? 'Datos de hoy' : `Últimos ${rango === '7d' ? '7' : rango === '15d' ? '15' : '30'} días`}
                 {' · '}{periodoLabel}
               </p>
+              {syncedAt && (
+                <p className="text-blue-400/70 text-xs mt-0.5">Actualizado el {syncedAt}</p>
+              )}
             </div>
             <div className="flex items-center gap-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-1">
               {RANGOS.map(({ label, val }) => (
