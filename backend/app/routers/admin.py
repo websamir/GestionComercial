@@ -364,10 +364,11 @@ async def get_access_control(
     current_user: Usuario = Depends(require_roles(*ADMIN_ONLY)),
     db: Session = Depends(get_db),
 ):
-    from datetime import date
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
     from sqlalchemy import func
 
-    today = date.today()
+    today = datetime.now(ZoneInfo("America/Bogota")).date()
 
     users = db.query(Usuario).order_by(Usuario.nombre).all()
 

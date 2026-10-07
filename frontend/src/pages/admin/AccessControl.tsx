@@ -14,9 +14,13 @@ const rolBadge: Record<string, string> = {
 
 function fmtUltimoAcceso(iso: string | null): { text: string; hoy: boolean; ayer: boolean } {
   if (!iso) return { text: 'Sin registro', hoy: false, ayer: false }
+  const tz = 'America/Bogota'
   const d = new Date(iso + (iso.endsWith('Z') ? '' : 'Z'))
-  const diffDays = Math.floor((Date.now() - d.getTime()) / 86400000)
-  const hora = d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' })
+  // Compare calendar dates in Colombia timezone (not elapsed ms)
+  const hoyStr = new Date().toLocaleDateString('en-CA', { timeZone: tz })
+  const dStr = d.toLocaleDateString('en-CA', { timeZone: tz })
+  const diffDays = Math.round((new Date(hoyStr).getTime() - new Date(dStr).getTime()) / 86400000)
+  const hora = d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', timeZone: tz })
   if (diffDays === 0) return { text: `Hoy ${hora}`, hoy: true, ayer: false }
   if (diffDays === 1) return { text: `Ayer ${hora}`, hoy: false, ayer: true }
   return { text: `Hace ${diffDays} días`, hoy: false, ayer: false }
