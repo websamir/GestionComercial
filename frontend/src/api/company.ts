@@ -26,3 +26,6 @@ export const uploadExcel = (file: File) => {
 }
 
 export const getAccessControl = () => client.get<any>('/admin/access-control')
+
+export const getConveniosDashboard = (params?: { fecha_inicio?: string; fecha_fin?: string }) =>
+  client.get<any>('/company/convenios-dashboard', { params })

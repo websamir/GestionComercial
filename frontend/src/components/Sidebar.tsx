@@ -47,9 +47,11 @@ const navByRole: Record<string, NavItem[]> = {
   ],
   JEFE_CANAL: [
     { path: '/empresa', label: 'Inicio', icon: 'inicio', end: true },
+    { path: '/convenios', label: 'Convenios', icon: 'convenios' },
   ],
   ADMIN: [
     { path: '/empresa', label: 'Inicio', icon: 'inicio', end: true },
+    { path: '/convenios', label: 'Convenios', icon: 'convenios' },
     { path: '/admin/accesos', label: 'Control de Acceso', icon: 'admin' },
     { path: '/admin', label: 'Configuración', icon: 'configuracion' },
   ],

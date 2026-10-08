@@ -896,3 +896,165 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
         "tienda_virtual_edo": _top("tienda_virtual_edo"),
         "ebusiness": _top("ebusiness"),
     }
+
+
+def _convenios_mask(sdf: pd.DataFrame) -> "pd.Series":
+    """Boolean mask identifying convenio rows (ADDI, PLATAM, BRILLA)."""
+    if "Tipo Documento" not in sdf.columns:
+        return pd.Series(False, index=sdf.index)
+    tipo_doc = sdf["Tipo Documento"].astype(str).str.upper().str.strip()
+    return tipo_doc.isin(["FEWP", "NCWP"]) | tipo_doc.isin(["FEWC", "NCWC"]) | tipo_doc.str.startswith("G1A")
+
+
+def get_convenios_full_dashboard(df: pd.DataFrame) -> dict:
+    """
+    Full convenios dashboard data:
+    - KPIs totales de convenios
+    - Desglose por convenio (ADDI, PLATAM, BRILLA)
+    - Top tiendas por convenios
+    - Top asesores por convenios
+    - Evolución diaria de ventas en convenios
+    - Mix de marcas en convenios
+    - Venta empresa (Origen=CANAL)
+    """
+    sdf = _sales_df(df)
+    total_venta_empresa = _safe_float(sdf["Valor Ventas Netas"].sum()) if not sdf.empty else 0.0
+
+    if sdf.empty or "Tipo Documento" not in sdf.columns:
+        empty = {
+            "kpis": {"total": 0.0, "margen_pct": 0.0, "pct_del_total": 0.0, "facturas": 0},
+            "por_convenio": [],
+            "top_tiendas": [],
+            "top_asesores": [],
+            "evolucion_diaria": [],
+            "marcas": [],
+            "venta_empresa": {"total": 0.0, "facturas": 0, "margen_pct": 0.0, "pct_del_total": 0.0},
+        }
+        return empty
+
+    conv_mask = _convenios_mask(sdf)
+    cdf = sdf[conv_mask].copy()
+
+    # --- KPIs ---
+    total = _safe_float(cdf["Valor Ventas Netas"].sum())
+    utilidad = _safe_float(cdf["Valor Utilidad"].sum()) if "Valor Utilidad" in cdf.columns else 0.0
+    facturas = _invoice_count(cdf)
+
+    # --- Por convenio ---
+    tipo_doc = sdf["Tipo Documento"].astype(str).str.upper().str.strip()
+    por_convenio = []
+    for nombre, mask in [
+        ("ADDI", tipo_doc.isin(["FEWP", "NCWP"])),
+        ("PLATAM", tipo_doc.isin(["FEWC", "NCWC"])),
+        ("BRILLA", tipo_doc.str.startswith("G1A")),
+    ]:
+        seg = sdf[mask]
+        v = _safe_float(seg["Valor Ventas Netas"].sum())
+        u = _safe_float(seg["Valor Utilidad"].sum()) if "Valor Utilidad" in seg.columns else 0.0
+        if v != 0:
+            por_convenio.append({
+                "nombre": nombre,
+                "total": round(v, 2),
+                "pct": round(_safe_pct(v, total), 1) if total else 0.0,
+                "margen_pct": round(_safe_pct(u, v), 1),
+                "facturas": _invoice_count(seg),
+            })
+    por_convenio.sort(key=lambda x: x["total"], reverse=True)
+
+    # --- Top tiendas ---
+    top_tiendas_list: list = []
+    if not cdf.empty and "desc_area" in cdf.columns:
+        tg = (
+            cdf.groupby("desc_area", dropna=False)
+            .agg(venta=("Valor Ventas Netas", "sum"))
+            .reset_index()
+            .sort_values("venta", ascending=False)
+            .head(10)
+        )
+        top_tiendas_list = [
+            {
+                "tienda": str(r["desc_area"]),
+                "venta": round(_safe_float(r["venta"]), 2),
+                "pct": round(_safe_pct(r["venta"], total), 1),
+            }
+            for _, r in tg.iterrows()
+            if pd.notna(r["desc_area"])
+        ]
+
+    # --- Top asesores ---
+    top_asesores_list: list = []
+    if not cdf.empty and "cod_vend" in cdf.columns:
+        ag = (
+            cdf.groupby(["cod_vend", "nombre_vend"], dropna=False)
+            .agg(venta=("Valor Ventas Netas", "sum"))
+            .reset_index()
+            .sort_values("venta", ascending=False)
+            .head(10)
+        )
+        top_asesores_list = [
+            {
+                "cod_vend": int(r["cod_vend"]) if pd.notna(r["cod_vend"]) else None,
+                "nombre": str(r["nombre_vend"]) if pd.notna(r.get("nombre_vend")) else "",
+                "venta": round(_safe_float(r["venta"]), 2),
+                "pct": round(_safe_pct(r["venta"], total), 1),
+            }
+            for _, r in ag.iterrows()
+        ]
+
+    # --- Evolución diaria ---
+    evolucion_list: list = []
+    if not cdf.empty and "fecha_hora" in cdf.columns:
+        cdf2 = cdf.dropna(subset=["fecha_hora"]).copy()
+        cdf2["fecha"] = cdf2["fecha_hora"].dt.date
+        eg = cdf2.groupby("fecha").agg(venta=("Valor Ventas Netas", "sum")).reset_index().sort_values("fecha")
+        evolucion_list = [
+            {"fecha": str(r["fecha"]), "venta": round(_safe_float(r["venta"]), 2)}
+            for _, r in eg.iterrows()
+        ]
+
+    # --- Marcas ---
+    marcas_list: list = []
+    if not cdf.empty and "Descripción Grupo" in cdf.columns:
+        mg = (
+            cdf.groupby("Descripción Grupo", dropna=False)
+            .agg(venta=("Valor Ventas Netas", "sum"))
+            .reset_index()
+            .sort_values("venta", ascending=False)
+            .head(8)
+        )
+        marcas_list = [
+            {
+                "marca": str(r["Descripción Grupo"]) if pd.notna(r["Descripción Grupo"]) else "Sin Grupo",
+                "venta": round(_safe_float(r["venta"]), 2),
+                "participacion": round(_safe_pct(r["venta"], total), 1),
+            }
+            for _, r in mg.iterrows()
+        ]
+
+    # --- Venta empresa (Origen=CANAL) ---
+    venta_empresa: dict = {"total": 0.0, "facturas": 0, "margen_pct": 0.0, "pct_del_total": 0.0}
+    if not sdf.empty and "Origen" in sdf.columns:
+        edf = sdf[sdf["Origen"] == "CANAL"]
+        et = _safe_float(edf["Valor Ventas Netas"].sum())
+        eu = _safe_float(edf["Valor Utilidad"].sum()) if "Valor Utilidad" in edf.columns else 0.0
+        venta_empresa = {
+            "total": round(et, 2),
+            "facturas": _invoice_count(edf),
+            "margen_pct": round(_safe_pct(eu, et), 1),
+            "pct_del_total": round(_safe_pct(et, total_venta_empresa), 1),
+        }
+
+    return {
+        "kpis": {
+            "total": round(total, 2),
+            "margen_pct": round(_safe_pct(utilidad, total), 1),
+            "pct_del_total": round(_safe_pct(total, total_venta_empresa), 1),
+            "facturas": facturas,
+        },
+        "por_convenio": por_convenio,
+        "top_tiendas": top_tiendas_list,
+        "top_asesores": top_asesores_list,
+        "evolucion_diaria": evolucion_list,
+        "marcas": marcas_list,
+        "venta_empresa": venta_empresa,
+    }

@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AsesorDashboard from './pages/asesor/Dashboard'
 import DirectorDashboard from './pages/director/Dashboard'
 import CompanyDashboard from './pages/company/Dashboard'
+import ConveniosDashboard from './pages/company/ConveniosDashboard'
 import AdminDashboard from './pages/admin/Dashboard'
 import AccessControlPage from './pages/admin/AccessControl'
 
@@ -55,6 +56,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={['JEFE_CANAL', 'ADMIN']}>
               <CompanyDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/convenios"
+          element={
+            <ProtectedRoute roles={['JEFE_CANAL', 'ADMIN']}>
+              <ConveniosDashboard />
             </ProtectedRoute>
           }
         />
