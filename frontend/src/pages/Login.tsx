@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/auth'
 
@@ -7,6 +7,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [shake, setShake] = useState(false)
   const login = useAuthStore((s) => s.login)
   const navigate = useNavigate()
 
@@ -18,22 +19,48 @@ export default function Login() {
       await login(email, password)
       navigate('/')
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || 'Credenciales incorrectas. Intente nuevamente.'
+      const msg = err?.response?.data?.detail || 'Correo o contraseña incorrectos.'
       setError(msg)
+      setShake(true)
     } finally {
       setLoading(false)
     }
   }
 
+  useEffect(() => {
+    if (shake) {
+      const t = setTimeout(() => setShake(false), 500)
+      return () => clearTimeout(t)
+    }
+  }, [shake])
+
+  const inputClass = (hasError: boolean) =>
+    `w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent transition ${
+      hasError
+        ? 'border-red-400 focus:ring-red-300 bg-red-50'
+        : 'border-gray-200 focus:ring-accent'
+    }`
+
   return (
     <div className="min-h-screen bg-primary flex items-center justify-center p-4">
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-8px); }
+          40% { transform: translateX(8px); }
+          60% { transform: translateX(-6px); }
+          80% { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.45s ease-in-out; }
+      `}</style>
+
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent/20 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary-light/40 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-md">
+      <div className={`relative w-full max-w-md ${shake ? 'shake' : ''}`}>
         <div className="bg-card rounded-2xl shadow-2xl p-8">
           {/* Logo area */}
           <div className="text-center mb-8">
@@ -52,10 +79,10 @@ export default function Login() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setError('') }}
                 required
                 placeholder="usuario@invesakk.com"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+                className={inputClass(!!error)}
               />
             </div>
 
@@ -66,16 +93,24 @@ export default function Login() {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setError('') }}
                 required
                 placeholder="••••••••"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+                className={inputClass(!!error)}
               />
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-100 rounded-lg px-4 py-3 text-sm text-danger">
-                {error}
+              <div className="flex items-start gap-3 bg-red-50 border border-red-300 rounded-lg px-4 py-3">
+                <svg className="flex-shrink-0 mt-0.5 text-red-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-red-700">Acceso denegado</p>
+                  <p className="text-xs text-red-600 mt-0.5">{error}</p>
+                </div>
               </div>
             )}
 
