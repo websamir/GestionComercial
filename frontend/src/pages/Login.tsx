@@ -79,7 +79,7 @@ export default function Login() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setError('') }}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="usuario@invesakk.com"
                 className={inputClass(!!error)}
@@ -93,7 +93,8 @@ export default function Login() {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => { setPassword(e.target.value); setError('') }}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 required
                 placeholder="••••••••"
                 className={inputClass(!!error)}
