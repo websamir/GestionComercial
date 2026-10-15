@@ -804,9 +804,13 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
     # CONVENIOS rows are excluded from advisor ranking: those sales go through regular
     # store advisors and there are no dedicated "Compra Eficiente" advisors.
     canal_tag = pd.Series("otro", index=sdf.index)
+    canal_tag[
+        (sdf["Origen"] == "CANAL") &
+        ~tipo.str.contains("PLATAM", case=False) &
+        ~tipo.str.contains("ADDI", case=False)
+    ] = "venta_empresa"
     canal_tag[tipo.str.contains("PLATAM", case=False)] = "tienda_virtual_edo"
     canal_tag[tipo.str.contains("ADDI", case=False)] = "ebusiness"
-    canal_tag[(sdf["Origen"] == "CANAL") & ~tipo.str.contains("PLATAM", case=False)] = "venta_empresa"
     canal_tag[
         (sdf["Origen"] == "VENDEDOR") &
         ~tipo.str.contains("CONVENIOS", case=False)
