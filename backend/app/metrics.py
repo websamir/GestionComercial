@@ -572,7 +572,11 @@ def get_store_breakdown(df: pd.DataFrame) -> list[dict]:
     Returns fields matching StoreRow in frontend types.
     """
     sdf = _sales_df(df)
-    stores = df["desc_area"].dropna().unique()
+    EXCLUDE_AREAS = {"ESTATAL", "EBUSINESS"}
+    stores = [
+        a for a in df["desc_area"].dropna().unique()
+        if str(a).upper() not in EXCLUDE_AREAS
+    ]
 
     result = []
     for area in stores:
