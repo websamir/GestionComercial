@@ -889,12 +889,57 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
         result.sort(key=lambda x: x["venta"], reverse=True)
         return result
 
+    ESTATAL_COD_VEND = {6049, 5570, 5171, 5645, 5296, 6165, 5056}
+
+    def _top_estatal() -> list[dict]:
+        seg = sdf_known[
+            (sdf_known["_canal"] == "tiendas") &
+            sdf_known["cod_vend"].isin(ESTATAL_COD_VEND)
+        ]
+        if seg.empty:
+            return []
+        vendors = seg.groupby("cod_vend").agg(
+            nombre=("nombre_vend", "first"),
+            desc_area=("desc_area", "first"),
+        ).reset_index()
+        result = []
+        for _, vrow in vendors.iterrows():
+            cod = vrow["cod_vend"]
+            vdf = seg[seg["cod_vend"] == cod]
+            venta = _safe_float(vdf["Valor Ventas Netas"].sum())
+            utilidad = _safe_float(vdf["Valor Utilidad"].sum())
+            facturas = _invoice_count(vdf)
+            ppto = _safe_float(ppto_lookup.get(cod, 0))
+            ticket = round(venta / facturas, 2) if facturas > 0 else 0.0
+            if facturas > 0 and "Tipo Documento" in vdf.columns:
+                mask_ventas = ~vdf["Tipo Documento"].astype(str).str.upper().str.strip().str.startswith("NC")
+                items = round(len(vdf.loc[mask_ventas].dropna(subset=["Número Documento"])) / facturas, 2)
+            elif facturas > 0:
+                items = round(len(vdf.dropna(subset=["Número Documento"])) / facturas, 2)
+            else:
+                items = 0.0
+            result.append({
+                "cod_vend": int(cod) if pd.notna(cod) else None,
+                "nombre": str(vrow["nombre"]) if pd.notna(vrow["nombre"]) else "",
+                "tienda": str(vrow["desc_area"]) if pd.notna(vrow["desc_area"]) else "",
+                "venta": round(venta, 2),
+                "cumplimiento": _safe_pct(venta, ppto),
+                "margen_pct": _safe_pct(utilidad, venta),
+                "facturas": facturas,
+                "ticket_promedio": ticket,
+                "items_factura": items,
+            })
+        result = [r for r in result if r["venta"] > 0]
+        result.sort(key=lambda x: x["venta"], reverse=True)
+        return result
+
     return {
         "compra_eficiente": _top("compra_eficiente"),
         "tiendas": _top("tiendas"),
         "venta_empresa": _top("venta_empresa"),
         "tienda_virtual_edo": _top("tienda_virtual_edo"),
         "ebusiness": _top("ebusiness"),
+        "estatal": _top_estatal(),
     }
 
 

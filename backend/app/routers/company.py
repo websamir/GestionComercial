@@ -75,6 +75,7 @@ async def company_dashboard(
         "top_compra_eficiente": tops["compra_eficiente"],
         "top_tiendas": tops["tiendas"],
         "top_empresa": tops["venta_empresa"],
+        "top_estatal": tops["estatal"],
         "top_tienda_virtual_edo": tops["tienda_virtual_edo"],
         "top_ebusiness": tops["ebusiness"],
         "convenios": convenios,
