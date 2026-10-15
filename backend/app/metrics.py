@@ -892,10 +892,9 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
     ESTATAL_COD_VEND = {6049, 5570, 5171, 5645, 5296, 6165, 5056}
 
     def _top_estatal() -> list[dict]:
-        seg = sdf_known[
-            (sdf_known["_canal"] == "tiendas") &
-            sdf_known["cod_vend"].isin(ESTATAL_COD_VEND)
-        ]
+        estatal_int = {int(c) for c in ESTATAL_COD_VEND}
+        cod_vend_int = pd.to_numeric(sdf_known["cod_vend"], errors="coerce").astype("Int64")
+        seg = sdf_known[cod_vend_int.isin(estatal_int)]
         if seg.empty:
             return []
         vendors = seg.groupby("cod_vend").agg(
