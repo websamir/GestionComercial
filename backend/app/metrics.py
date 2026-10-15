@@ -932,10 +932,13 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
         result.sort(key=lambda x: x["venta"], reverse=True)
         return result
 
+    ve_all = _top("venta_empresa")
+    ve_sin_estatal = [r for r in ve_all if r.get("cod_vend") not in ESTATAL_COD_VEND]
+
     return {
         "compra_eficiente": _top("compra_eficiente"),
         "tiendas": _top("tiendas"),
-        "venta_empresa": _top("venta_empresa"),
+        "venta_empresa": ve_sin_estatal,
         "tienda_virtual_edo": _top("tienda_virtual_edo"),
         "ebusiness": _top("ebusiness"),
         "estatal": _top_estatal(),
