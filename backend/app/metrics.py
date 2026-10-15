@@ -904,7 +904,8 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
 
     def _top_estatal() -> list[dict]:
         estatal_float = {float(c) for c in ESTATAL_COD_VEND}
-        seg = sdf[sdf["cod_vend"].isin(estatal_float)]
+        desc = sdf["desc_area"].fillna("").str.upper()
+        seg = sdf[sdf["cod_vend"].isin(estatal_float) | desc.str.contains("ESTATAL")]
         if seg.empty:
             return []
         vendors = seg.groupby("cod_vend").agg(
@@ -943,14 +944,27 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
         return result
 
     ve_all = _top("venta_empresa")
-    ve_sin_estatal = [r for r in ve_all if r.get("cod_vend") not in ESTATAL_COD_VEND]
+    ve_filtrado = [
+        r for r in ve_all
+        if r.get("cod_vend") not in ESTATAL_COD_VEND
+        and "ESTATAL" not in str(r.get("tienda", "")).upper()
+        and "EBUSINESS" not in str(r.get("tienda", "")).upper()
+    ]
+
+    eb_all = _top("ebusiness")
+    eb_desc = [
+        r for r in ve_all
+        if "EBUSINESS" in str(r.get("tienda", "")).upper()
+    ]
+    ebusiness_final = eb_all + [r for r in eb_desc if r.get("cod_vend") not in {x.get("cod_vend") for x in eb_all}]
+    ebusiness_final.sort(key=lambda x: x["venta"], reverse=True)
 
     return {
         "compra_eficiente": _top("compra_eficiente"),
         "tiendas": _top("tiendas"),
-        "venta_empresa": ve_sin_estatal,
+        "venta_empresa": ve_filtrado,
         "tienda_virtual_edo": _top("tienda_virtual_edo"),
-        "ebusiness": _top("ebusiness"),
+        "ebusiness": ebusiness_final,
         "estatal": _top_estatal(),
     }
 
