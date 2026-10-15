@@ -618,10 +618,17 @@ def get_channel_breakdown(df: pd.DataFrame) -> list[dict]:
     else:
         df_convenios = df.iloc[0:0]
 
+    ESTATAL_COD_VEND_F = {float(c) for c in [6049, 5570, 5171, 5645, 5296, 6165, 5056]}
+    cod_num = pd.to_numeric(df["cod_vend"], errors="coerce")
+    df_estatal = df[cod_num.isin(ESTATAL_COD_VEND_F)]
+    df_ebusiness = df[df["Descripción Tipo"].fillna("").str.contains("ADDI", case=False)]
+
     channels = [
         ("Tiendas", df[df["Origen"] == "VENDEDOR"]),
         ("Venta Empresa", df[df["Origen"] == "CANAL"]),
         ("Convenios", df_convenios),
+        ("Estatal", df_estatal),
+        ("Ebusiness", df_ebusiness),
     ]
 
     result = []
