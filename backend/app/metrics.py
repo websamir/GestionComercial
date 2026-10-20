@@ -401,7 +401,8 @@ def get_sales_by_channel(df: pd.DataFrame) -> list[dict]:
 
     # Virtual vs physical
     if "Bodega" in sdf.columns:
-        sdf["es_virtual"] = sdf["Bodega"].isin(VIRTUAL_BODEGAS)
+        bodega_int = pd.to_numeric(sdf["Bodega"], errors="coerce").fillna(-1).astype(int)
+        sdf["es_virtual"] = bodega_int.isin(VIRTUAL_BODEGAS)
         canal_result = []
         for _, row in origen_grouped.iterrows():
             canal_result.append({
@@ -427,7 +428,8 @@ def get_virtual_vs_fisica(df: pd.DataFrame) -> dict:
     if sdf.empty or "Bodega" not in sdf.columns:
         return {"virtual": 0.0, "fisica": 0.0, "pct_virtual": 0.0, "pct_fisica": 0.0}
     sdf = sdf.copy()
-    sdf["es_virtual"] = sdf["Bodega"].isin(VIRTUAL_BODEGAS)
+    bodega_int = pd.to_numeric(sdf["Bodega"], errors="coerce").fillna(-1).astype(int)
+    sdf["es_virtual"] = bodega_int.isin(VIRTUAL_BODEGAS)
     virtual = _safe_float(sdf[sdf["es_virtual"]]["Valor Ventas Netas"].sum())
     fisica = _safe_float(sdf[~sdf["es_virtual"]]["Valor Ventas Netas"].sum())
     total = virtual + fisica
