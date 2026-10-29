@@ -280,10 +280,14 @@ def get_sales_by_day_per_channel(df: pd.DataFrame) -> dict:
     tipo_series = sdf_all["Descripción Tipo"].fillna("")
     conv_vends = set(sdf_all[tipo_series.str.contains("CONVENIOS", case=False)]["cod_vend"].unique())
 
+    ESTATAL_COD_VEND_F = {float(c) for c in [6049, 5570, 5171, 5645, 5296, 6165, 5056]}
+    cod_num_all = pd.to_numeric(sdf_all["cod_vend"], errors="coerce")
+    desc_all = sdf_all["desc_area"].fillna("").str.upper()
     channels = {
         "Tiendas": sdf_all[sdf_all["Origen"] == "VENDEDOR"],
         "Venta Empresa": sdf_all[sdf_all["Origen"] == "CANAL"],
         "Convenios": sdf_all[sdf_all["cod_vend"].isin(conv_vends) & tipo_series.str.contains("CONVENIOS", case=False)],
+        "Estatal": sdf_all[cod_num_all.isin(ESTATAL_COD_VEND_F) | desc_all.str.contains("ESTATAL")],
     }
 
     result = {}
