@@ -978,7 +978,7 @@ def _convenios_mask(sdf: pd.DataFrame) -> "pd.Series":
     if "Tipo Documento" not in sdf.columns:
         return pd.Series(False, index=sdf.index)
     tipo_doc = sdf["Tipo Documento"].astype(str).str.upper().str.strip()
-    return tipo_doc.isin(["FEWP", "NCWP"]) | tipo_doc.isin(["FEWC", "NCWC"]) | tipo_doc.str.startswith("G1A")
+    return tipo_doc.isin(["FEWP", "NCWP"]) | tipo_doc.isin(["FEWC", "NCWC"]) | tipo_doc.isin(["FEWD", "NCWD"]) | tipo_doc.str.startswith("G1A")
 
 
 def get_convenios_full_dashboard(df: pd.DataFrame) -> dict:
@@ -1021,6 +1021,7 @@ def get_convenios_full_dashboard(df: pd.DataFrame) -> dict:
     for nombre, mask in [
         ("ADDI", tipo_doc.isin(["FEWP", "NCWP"])),
         ("PLATAM", tipo_doc.isin(["FEWC", "NCWC"])),
+        ("DILO", tipo_doc.isin(["FEWD", "NCWD"])),
         ("BRILLA", tipo_doc.str.startswith("G1A")),
     ]:
         seg = sdf[mask]
