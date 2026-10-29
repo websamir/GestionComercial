@@ -947,12 +947,53 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
         result.sort(key=lambda x: x["venta"], reverse=True)
         return result
 
+    def _top_tienda_digital() -> list[dict]:
+        desc = sdf["desc_area"].fillna("").str.upper()
+        seg = sdf[desc.str.contains("TIENDA DIGITAL")]
+        if seg.empty:
+            return []
+        vendors = seg.groupby("cod_vend").agg(
+            nombre=("nombre_vend", "first"),
+            desc_area=("desc_area", "first"),
+        ).reset_index()
+        result = []
+        for _, vrow in vendors.iterrows():
+            cod = vrow["cod_vend"]
+            vdf = seg[seg["cod_vend"] == cod]
+            venta = _safe_float(vdf["Valor Ventas Netas"].sum())
+            utilidad = _safe_float(vdf["Valor Utilidad"].sum())
+            facturas = _invoice_count(vdf)
+            ppto = _safe_float(ppto_lookup.get(cod, 0))
+            ticket = round(venta / facturas, 2) if facturas > 0 else 0.0
+            if facturas > 0 and "Tipo Documento" in vdf.columns:
+                mask_ventas = ~vdf["Tipo Documento"].astype(str).str.upper().str.strip().str.startswith("NC")
+                items = round(len(vdf.loc[mask_ventas].dropna(subset=["Número Documento"])) / facturas, 2)
+            elif facturas > 0:
+                items = round(len(vdf.dropna(subset=["Número Documento"])) / facturas, 2)
+            else:
+                items = 0.0
+            result.append({
+                "cod_vend": int(cod) if pd.notna(cod) else None,
+                "nombre": str(vrow["nombre"]) if pd.notna(vrow["nombre"]) else "",
+                "tienda": str(vrow["desc_area"]) if pd.notna(vrow["desc_area"]) else "",
+                "venta": round(venta, 2),
+                "cumplimiento": _safe_pct(venta, ppto),
+                "margen_pct": _safe_pct(utilidad, venta),
+                "facturas": facturas,
+                "ticket_promedio": ticket,
+                "items_factura": items,
+            })
+        result = [r for r in result if r["venta"] > 0]
+        result.sort(key=lambda x: x["venta"], reverse=True)
+        return result
+
     ve_all = _top("venta_empresa")
     ve_filtrado = [
         r for r in ve_all
         if r.get("cod_vend") not in ESTATAL_COD_VEND
         and "ESTATAL" not in str(r.get("tienda", "")).upper()
         and "EBUSINESS" not in str(r.get("tienda", "")).upper()
+        and "TIENDA DIGITAL" not in str(r.get("tienda", "")).upper()
     ]
 
     eb_all = _top("ebusiness")
@@ -970,6 +1011,7 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
         "tienda_virtual_edo": _top("tienda_virtual_edo"),
         "ebusiness": ebusiness_final,
         "estatal": _top_estatal(),
+        "tienda_digital": _top_tienda_digital(),
     }
 
 

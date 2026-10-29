@@ -173,6 +173,7 @@ export interface CompanyDashboardData {
   top_tiendas: TopAsesor[]
   top_empresa: TopAsesor[]
   top_estatal: TopAsesor[]
+  top_tienda_digital: TopAsesor[]
   top_tienda_virtual_edo: TopAsesor[]
   top_ebusiness: TopAsesor[]
   convenios: ConveniosData

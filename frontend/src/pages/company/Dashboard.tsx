@@ -536,6 +536,7 @@ export default function CompanyDashboard() {
   const topEmpresa: TopAsesor[] = data?.top_empresa ?? []
   const topEstatal: TopAsesor[] = data?.top_estatal ?? []
   const topEbusiness: TopAsesor[] = data?.top_ebusiness ?? []
+  const topTiendaDigital: TopAsesor[] = data?.top_tienda_digital ?? []
 
   return (
     <Layout title="INVESAKK" subtitle="Vista Empresa" periodo={periodo} onPeriodoChange={setPeriodo}>
@@ -842,8 +843,8 @@ export default function CompanyDashboard() {
             />
           </div>
 
-          {/* ── Top Venta Empresa + Canal Estatal + Ebusiness ── */}
-          {(topEmpresa.length > 0 || topEstatal.length > 0 || topEbusiness.length > 0) && (
+          {/* ── Top Venta Empresa + Canal Estatal + Ebusiness + Tienda Digital ── */}
+          {(topEmpresa.length > 0 || topEstatal.length > 0 || topEbusiness.length > 0 || topTiendaDigital.length > 0) && (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
               {topEmpresa.length > 0 && (
                 <TopAsesores
@@ -857,6 +858,13 @@ export default function CompanyDashboard() {
                   title="Top Asesores — Canal Estatal"
                   data={topEstatal}
                   accentColor="#8B5CF6"
+                />
+              )}
+              {topTiendaDigital.length > 0 && (
+                <TopAsesores
+                  title="Top Asesores — Tiendas Virtual del Estado"
+                  data={topTiendaDigital}
+                  accentColor="#06B6D4"
                 />
               )}
               {topEbusiness.length > 0 && (
