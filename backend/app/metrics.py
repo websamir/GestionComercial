@@ -1034,23 +1034,30 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
         result.sort(key=lambda x: x["venta"], reverse=True)
         return result
 
+    # Calcular tops especializados primero para obtener cod_vend a excluir
+    estatal_top = _top_estatal()
+    tienda_digital_top = _top_tienda_digital()
+    eb_all = _top("ebusiness")
+    exclude_from_ve = (
+        {float(c) for c in ESTATAL_COD_VEND}
+        | {float(r["cod_vend"]) for r in estatal_top if r.get("cod_vend")}
+        | {float(r["cod_vend"]) for r in tienda_digital_top if r.get("cod_vend")}
+        | {float(r["cod_vend"]) for r in eb_all if r.get("cod_vend")}
+    )
+
     ve_canal = _top("venta_empresa")
     ve_desc = _top_by_desc_area("VENTA EMPRESA")
     ve_canal_ids = {r.get("cod_vend") for r in ve_canal}
-    ve_all = ve_canal + [r for r in ve_desc if r.get("cod_vend") not in ve_canal_ids]
+    ve_all_raw = ve_canal + [r for r in ve_desc if r.get("cod_vend") not in ve_canal_ids]
 
     ve_filtrado = [
-        r for r in ve_all
-        if r.get("cod_vend") not in ESTATAL_COD_VEND
-        and "ESTATAL" not in str(r.get("tienda", "")).upper()
-        and "EBUSINESS" not in str(r.get("tienda", "")).upper()
-        and "TIENDA DIGITAL" not in str(r.get("tienda", "")).upper()
+        r for r in ve_all_raw
+        if float(r["cod_vend"]) not in exclude_from_ve
     ]
     ve_filtrado.sort(key=lambda x: x["venta"], reverse=True)
 
-    eb_all = _top("ebusiness")
     eb_desc = [
-        r for r in ve_all
+        r for r in ve_all_raw
         if "EBUSINESS" in str(r.get("tienda", "")).upper()
     ]
     ebusiness_final = eb_all + [r for r in eb_desc if r.get("cod_vend") not in {x.get("cod_vend") for x in eb_all}]
@@ -1062,8 +1069,8 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
         "venta_empresa": ve_filtrado,
         "tienda_virtual_edo": _top("tienda_virtual_edo"),
         "ebusiness": ebusiness_final,
-        "estatal": _top_estatal(),
-        "tienda_digital": _top_tienda_digital(),
+        "estatal": estatal_top,
+        "tienda_digital": tienda_digital_top,
     }
 
 
