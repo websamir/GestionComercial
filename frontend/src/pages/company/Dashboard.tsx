@@ -135,6 +135,7 @@ const CANAL_COLORS: Record<string, { line: string; bg: string; dot: string }> = 
   'Tiendas':           { line: '#2563EB', bg: 'bg-blue-50',   dot: 'bg-blue-500' },
   'Venta Empresa':     { line: '#10B981', bg: 'bg-green-50',  dot: 'bg-green-500' },
   'Convenios':         { line: '#8B5CF6', bg: 'bg-purple-50', dot: 'bg-purple-500' },
+  'Estatal':           { line: '#F97316', bg: 'bg-orange-50', dot: 'bg-orange-500' },
   'Tienda Virtual':    { line: '#F59E0B', bg: 'bg-amber-50',  dot: 'bg-amber-500' },
   'E-business':        { line: '#EF4444', bg: 'bg-red-50',    dot: 'bg-red-500' },
 }
