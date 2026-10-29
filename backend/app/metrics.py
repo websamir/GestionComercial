@@ -283,12 +283,19 @@ def get_sales_by_day_per_channel(df: pd.DataFrame) -> dict:
     ESTATAL_COD_VEND_F = {float(c) for c in [6049, 5570, 5171, 5645, 5296, 6165, 5056]}
     cod_num_all = pd.to_numeric(sdf_all["cod_vend"], errors="coerce")
     desc_all = sdf_all["desc_area"].fillna("").str.upper()
+    ve_vends      = set(sdf_all[desc_all.str.contains("VENTA EMPRESA")]["cod_vend"].unique())
+    estatal_vends = set(sdf_all[cod_num_all.isin(ESTATAL_COD_VEND_F) | desc_all.str.contains("ESTATAL")]["cod_vend"].unique())
+    td_vends      = set(sdf_all[desc_all.str.contains("TIENDA DIGITAL")]["cod_vend"].unique())
+    eb_vends      = set(sdf_all[desc_all.str.contains("EBUSINESS")]["cod_vend"].unique())
+    special_all   = ve_vends | estatal_vends | td_vends | eb_vends
+
     channels = {
-        "Tiendas": sdf_all[sdf_all["Origen"] == "VENDEDOR"],
+        "Tiendas":      sdf_all[~sdf_all["cod_vend"].isin(special_all)],
         "Venta Empresa": sdf_all[desc_all.str.contains("VENTA EMPRESA")],
-        "Convenios": sdf_all[sdf_all["cod_vend"].isin(conv_vends) & tipo_series.str.contains("CONVENIOS", case=False)],
-        "Estatal": sdf_all[cod_num_all.isin(ESTATAL_COD_VEND_F) | desc_all.str.contains("ESTATAL")],
+        "Convenios":    sdf_all[sdf_all["cod_vend"].isin(conv_vends) & tipo_series.str.contains("CONVENIOS", case=False)],
+        "Estatal":      sdf_all[cod_num_all.isin(ESTATAL_COD_VEND_F) | desc_all.str.contains("ESTATAL")],
         "Tienda Digital": sdf_all[desc_all.str.contains("TIENDA DIGITAL")],
+        "Ebusiness":    sdf_all[desc_all.str.contains("EBUSINESS")],
     }
 
     result = {}
@@ -627,16 +634,22 @@ def get_channel_breakdown(df: pd.DataFrame) -> list[dict]:
     else:
         df_convenios = df.iloc[0:0]
 
+    desc_df = df["desc_area"].fillna("").str.upper()
     ESTATAL_COD_VEND_F = {float(c) for c in [6049, 5570, 5171, 5645, 5296, 6165, 5056]}
     cod_num = pd.to_numeric(df["cod_vend"], errors="coerce")
-    df_estatal = df[cod_num.isin(ESTATAL_COD_VEND_F)]
-    df_ebusiness = df[df["Descripción Tipo"].fillna("").str.contains("ADDI", case=False)]
-    df_tienda_digital = df[df["desc_area"].fillna("").str.upper().str.contains("TIENDA DIGITAL")]
 
-    df_venta_empresa = df[df["desc_area"].fillna("").str.upper().str.contains("VENTA EMPRESA")]
+    df_venta_empresa  = df[desc_df.str.contains("VENTA EMPRESA")]
+    df_estatal        = df[cod_num.isin(ESTATAL_COD_VEND_F) | desc_df.str.contains("ESTATAL")]
+    df_tienda_digital = df[desc_df.str.contains("TIENDA DIGITAL")]
+    df_ebusiness      = df[desc_df.str.contains("EBUSINESS")]
+
+    # Tiendas: todos los asesores que no pertenecen a los canales especiales
+    special_vends = set(df_venta_empresa["cod_vend"].unique()) | set(df_estatal["cod_vend"].unique()) | \
+                    set(df_tienda_digital["cod_vend"].unique()) | set(df_ebusiness["cod_vend"].unique())
+    df_tiendas = df[~df["cod_vend"].isin(special_vends)]
 
     channels = [
-        ("Tiendas", df[df["Origen"] == "VENDEDOR"]),
+        ("Tiendas", df_tiendas),
         ("Venta Empresa", df_venta_empresa),
         ("Convenios", df_convenios),
         ("Estatal", df_estatal),
