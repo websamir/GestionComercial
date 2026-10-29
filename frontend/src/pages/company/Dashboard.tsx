@@ -136,6 +136,7 @@ const CANAL_COLORS: Record<string, { line: string; bg: string; dot: string }> = 
   'Venta Empresa':     { line: '#10B981', bg: 'bg-green-50',  dot: 'bg-green-500' },
   'Convenios':         { line: '#8B5CF6', bg: 'bg-purple-50', dot: 'bg-purple-500' },
   'Estatal':           { line: '#F97316', bg: 'bg-orange-50', dot: 'bg-orange-500' },
+  'Tienda Digital':    { line: '#06B6D4', bg: 'bg-cyan-50',   dot: 'bg-cyan-500' },
   'Tienda Virtual':    { line: '#F59E0B', bg: 'bg-amber-50',  dot: 'bg-amber-500' },
   'E-business':        { line: '#EF4444', bg: 'bg-red-50',    dot: 'bg-red-500' },
 }
@@ -808,7 +809,7 @@ export default function CompanyDashboard() {
 
           {/* ── Canal mini-cards (2x2) ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {(data.canales ?? []).filter(c => ['Tiendas','Venta Empresa','Convenios','Estatal'].includes(c.canal)).map(c => {
+            {(data.canales ?? []).filter(c => ['Tiendas','Venta Empresa','Convenios','Estatal','Tienda Digital'].includes(c.canal)).map(c => {
               if (c.canal === 'Convenios') {
                 const convData = (data as any).convenios
                 return (

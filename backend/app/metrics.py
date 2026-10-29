@@ -288,6 +288,7 @@ def get_sales_by_day_per_channel(df: pd.DataFrame) -> dict:
         "Venta Empresa": sdf_all[sdf_all["Origen"] == "CANAL"],
         "Convenios": sdf_all[sdf_all["cod_vend"].isin(conv_vends) & tipo_series.str.contains("CONVENIOS", case=False)],
         "Estatal": sdf_all[cod_num_all.isin(ESTATAL_COD_VEND_F) | desc_all.str.contains("ESTATAL")],
+        "Tienda Digital": sdf_all[desc_all.str.contains("TIENDA DIGITAL")],
     }
 
     result = {}
@@ -630,12 +631,14 @@ def get_channel_breakdown(df: pd.DataFrame) -> list[dict]:
     cod_num = pd.to_numeric(df["cod_vend"], errors="coerce")
     df_estatal = df[cod_num.isin(ESTATAL_COD_VEND_F)]
     df_ebusiness = df[df["Descripción Tipo"].fillna("").str.contains("ADDI", case=False)]
+    df_tienda_digital = df[df["desc_area"].fillna("").str.upper().str.contains("TIENDA DIGITAL")]
 
     channels = [
         ("Tiendas", df[df["Origen"] == "VENDEDOR"]),
         ("Venta Empresa", df[df["Origen"] == "CANAL"]),
         ("Convenios", df_convenios),
         ("Estatal", df_estatal),
+        ("Tienda Digital", df_tienda_digital),
         ("Ebusiness", df_ebusiness),
     ]
 
