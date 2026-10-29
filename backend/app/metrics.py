@@ -912,17 +912,11 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
         return result
 
     ESTATAL_COD_VEND = {6049, 5570, 5171, 5645, 5296, 6165, 5056}
-    # Asesores que pertenecen a Venta Empresa aunque su desc_area diga ESTATAL
-    VENTA_EMPRESA_OVERRIDE = {5461}
 
     def _top_estatal() -> list[dict]:
         estatal_float = {float(c) for c in ESTATAL_COD_VEND}
-        override_float = {float(c) for c in VENTA_EMPRESA_OVERRIDE}
         desc = sdf["desc_area"].fillna("").str.upper()
-        seg = sdf[
-            (sdf["cod_vend"].isin(estatal_float) | desc.str.contains("ESTATAL"))
-            & ~sdf["cod_vend"].isin(override_float)
-        ]
+        seg = sdf[sdf["cod_vend"].isin(estatal_float) | desc.str.contains("ESTATAL")]
         if seg.empty:
             return []
         vendors = seg.groupby("cod_vend").agg(
@@ -1000,17 +994,59 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
         result.sort(key=lambda x: x["venta"], reverse=True)
         return result
 
-    ve_all = _top("venta_empresa")
+    def _top_by_desc_area(keyword: str) -> list[dict]:
+        desc = sdf["desc_area"].fillna("").str.upper()
+        seg = sdf[desc.str.contains(keyword.upper())]
+        if seg.empty:
+            return []
+        vendors = seg.groupby("cod_vend").agg(
+            nombre=("nombre_vend", "first"),
+            desc_area=("desc_area", "first"),
+        ).reset_index()
+        result = []
+        for _, vrow in vendors.iterrows():
+            cod = vrow["cod_vend"]
+            vdf = seg[seg["cod_vend"] == cod]
+            venta = _safe_float(vdf["Valor Ventas Netas"].sum())
+            utilidad = _safe_float(vdf["Valor Utilidad"].sum())
+            facturas = _invoice_count(vdf)
+            ppto = _safe_float(ppto_lookup.get(cod, 0))
+            ticket = round(venta / facturas, 2) if facturas > 0 else 0.0
+            if facturas > 0 and "Tipo Documento" in vdf.columns:
+                mask_ventas = ~vdf["Tipo Documento"].astype(str).str.upper().str.strip().str.startswith("NC")
+                items = round(len(vdf.loc[mask_ventas].dropna(subset=["Número Documento"])) / facturas, 2)
+            elif facturas > 0:
+                items = round(len(vdf.dropna(subset=["Número Documento"])) / facturas, 2)
+            else:
+                items = 0.0
+            result.append({
+                "cod_vend": int(cod) if pd.notna(cod) else None,
+                "nombre": str(vrow["nombre"]) if pd.notna(vrow["nombre"]) else "",
+                "tienda": str(vrow["desc_area"]) if pd.notna(vrow["desc_area"]) else "",
+                "venta": round(venta, 2),
+                "cumplimiento": _safe_pct(venta, ppto),
+                "margen_pct": _safe_pct(utilidad, venta),
+                "facturas": facturas,
+                "ticket_promedio": ticket,
+                "items_factura": items,
+            })
+        result = [r for r in result if r["venta"] > 0]
+        result.sort(key=lambda x: x["venta"], reverse=True)
+        return result
+
+    ve_canal = _top("venta_empresa")
+    ve_desc = _top_by_desc_area("VENTA EMPRESA")
+    ve_canal_ids = {r.get("cod_vend") for r in ve_canal}
+    ve_all = ve_canal + [r for r in ve_desc if r.get("cod_vend") not in ve_canal_ids]
+
     ve_filtrado = [
         r for r in ve_all
-        if r.get("cod_vend") in VENTA_EMPRESA_OVERRIDE  # override explícito
-        or (
-            r.get("cod_vend") not in ESTATAL_COD_VEND
-            and "ESTATAL" not in str(r.get("tienda", "")).upper()
-            and "EBUSINESS" not in str(r.get("tienda", "")).upper()
-            and "TIENDA DIGITAL" not in str(r.get("tienda", "")).upper()
-        )
+        if r.get("cod_vend") not in ESTATAL_COD_VEND
+        and "ESTATAL" not in str(r.get("tienda", "")).upper()
+        and "EBUSINESS" not in str(r.get("tienda", "")).upper()
+        and "TIENDA DIGITAL" not in str(r.get("tienda", "")).upper()
     ]
+    ve_filtrado.sort(key=lambda x: x["venta"], reverse=True)
 
     eb_all = _top("ebusiness")
     eb_desc = [
