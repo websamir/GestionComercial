@@ -69,21 +69,33 @@ function SparkBarLabel({ x, y, width, value }: any) {
 
 function Sparkline({ data, color = '#2563EB' }: { data: SparkPoint[]; color?: string }) {
   return (
-    <ResponsiveContainer width="100%" height={72}>
-      <BarChart data={data} margin={{ top: 14, right: 2, bottom: 0, left: 2 }} barCategoryGap="20%">
-        <XAxis
-          dataKey="label"
-          tick={{ fontSize: 8, fill: '#94a3b8' }}
-          axisLine={false}
-          tickLine={false}
-          interval={0}
-        />
-        <Tooltip content={<SparkTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
-        <Bar dataKey="v" fill={color} radius={[2, 2, 0, 0]} opacity={0.85}>
-          <LabelList dataKey="v" content={<SparkBarLabel />} />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <div>
+      <div className="flex items-center gap-3 mb-1 px-1">
+        <span className="flex items-center gap-1 text-[9px] text-gray-400">
+          <span className="inline-block w-2.5 h-2 rounded-sm" style={{ background: color, opacity: 0.85 }} />
+          Valor
+        </span>
+        <span className="flex items-center gap-1 text-[9px] text-gray-400">
+          <span className="inline-block w-2.5 h-px bg-gray-300" />
+          Días
+        </span>
+      </div>
+      <ResponsiveContainer width="100%" height={72}>
+        <BarChart data={data} margin={{ top: 14, right: 2, bottom: 0, left: 2 }} barCategoryGap="20%">
+          <XAxis
+            dataKey="label"
+            tick={{ fontSize: 8, fill: '#94a3b8' }}
+            axisLine={false}
+            tickLine={false}
+            interval={0}
+          />
+          <Tooltip content={<SparkTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
+          <Bar dataKey="v" fill={color} radius={[2, 2, 0, 0]} opacity={0.85}>
+            <LabelList dataKey="v" content={<SparkBarLabel />} />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   )
 }
 
