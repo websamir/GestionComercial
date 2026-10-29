@@ -1053,11 +1053,13 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
     estatal_top = _top_estatal()
     tienda_digital_top = _top_tienda_digital()
     eb_all = _top("ebusiness")
+    eb_desc_top = _top_by_desc_area("EBUSINESS")
     exclude_from_ve = (
         {float(c) for c in ESTATAL_COD_VEND}
         | {float(r["cod_vend"]) for r in estatal_top if r.get("cod_vend")}
         | {float(r["cod_vend"]) for r in tienda_digital_top if r.get("cod_vend")}
         | {float(r["cod_vend"]) for r in eb_all if r.get("cod_vend")}
+        | {float(r["cod_vend"]) for r in eb_desc_top if r.get("cod_vend")}
     )
 
     ve_canal = _top("venta_empresa")
@@ -1071,11 +1073,8 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
     ]
     ve_filtrado.sort(key=lambda x: x["venta"], reverse=True)
 
-    eb_desc = [
-        r for r in ve_all_raw
-        if "EBUSINESS" in str(r.get("tienda", "")).upper()
-    ]
-    ebusiness_final = eb_all + [r for r in eb_desc if r.get("cod_vend") not in {x.get("cod_vend") for x in eb_all}]
+    eb_all_ids = {x.get("cod_vend") for x in eb_all}
+    ebusiness_final = eb_all + [r for r in eb_desc_top if r.get("cod_vend") not in eb_all_ids]
     ebusiness_final.sort(key=lambda x: x["venta"], reverse=True)
 
     return {
