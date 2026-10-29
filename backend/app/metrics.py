@@ -714,8 +714,8 @@ def get_convenios_breakdown(df: pd.DataFrame) -> dict:
     mask_addi   = tipo_doc.isin(["FEWP", "NCWP"])
     # PLATAM: FEWC (ventas) + NCWC (devoluciones)
     mask_platam = tipo_doc.isin(["FEWC", "NCWC"])
-    # DILO y VANTI: sin datos aún
-    mask_dilo   = pd.Series(False, index=sdf.index)
+    # DILO: FEWD (ventas) + NCWD (devoluciones)
+    mask_dilo   = tipo_doc.isin(["FEWD", "NCWD"])
     mask_vanti  = pd.Series(False, index=sdf.index)
     # BRILLA: todos los G1A*
     mask_brilla = tipo_doc.str.startswith("G1A")
@@ -762,7 +762,7 @@ def get_venta_directa(df: pd.DataFrame) -> dict:
 
     mask_addi   = tipo_doc.isin(["FEWP", "NCWP"])
     mask_platam = tipo_doc.isin(["FEWC", "NCWC"])
-    mask_dilo   = pd.Series(False, index=sdf.index)
+    mask_dilo   = tipo_doc.isin(["FEWD", "NCWD"])
     mask_vanti  = pd.Series(False, index=sdf.index)
     mask_brilla = tipo_doc.str.startswith("G1A")
     mask_convenio = mask_addi | mask_platam | mask_dilo | mask_vanti | mask_brilla
