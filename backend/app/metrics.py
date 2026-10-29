@@ -912,11 +912,17 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
         return result
 
     ESTATAL_COD_VEND = {6049, 5570, 5171, 5645, 5296, 6165, 5056}
+    # Asesores que pertenecen a Venta Empresa aunque su desc_area diga ESTATAL
+    VENTA_EMPRESA_OVERRIDE = {5461}
 
     def _top_estatal() -> list[dict]:
         estatal_float = {float(c) for c in ESTATAL_COD_VEND}
+        override_float = {float(c) for c in VENTA_EMPRESA_OVERRIDE}
         desc = sdf["desc_area"].fillna("").str.upper()
-        seg = sdf[sdf["cod_vend"].isin(estatal_float) | desc.str.contains("ESTATAL")]
+        seg = sdf[
+            (sdf["cod_vend"].isin(estatal_float) | desc.str.contains("ESTATAL"))
+            & ~sdf["cod_vend"].isin(override_float)
+        ]
         if seg.empty:
             return []
         vendors = seg.groupby("cod_vend").agg(
@@ -997,10 +1003,13 @@ def get_top_advisors_by_channel(df: pd.DataFrame) -> dict:
     ve_all = _top("venta_empresa")
     ve_filtrado = [
         r for r in ve_all
-        if r.get("cod_vend") not in ESTATAL_COD_VEND
-        and "ESTATAL" not in str(r.get("tienda", "")).upper()
-        and "EBUSINESS" not in str(r.get("tienda", "")).upper()
-        and "TIENDA DIGITAL" not in str(r.get("tienda", "")).upper()
+        if r.get("cod_vend") in VENTA_EMPRESA_OVERRIDE  # override explícito
+        or (
+            r.get("cod_vend") not in ESTATAL_COD_VEND
+            and "ESTATAL" not in str(r.get("tienda", "")).upper()
+            and "EBUSINESS" not in str(r.get("tienda", "")).upper()
+            and "TIENDA DIGITAL" not in str(r.get("tienda", "")).upper()
+        )
     ]
 
     eb_all = _top("ebusiness")
