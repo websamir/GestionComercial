@@ -524,7 +524,7 @@ export default function CompanyDashboard() {
     const dias = ventas_diarias_canal[canal] ?? []
     return dias.map(d => ({
       v: d.venta,
-      label: `Día ${d.fecha.slice(8)}`,
+      label: `${parseInt(d.fecha.slice(8), 10)}`,
     }))
   }
 
