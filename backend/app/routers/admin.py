@@ -21,7 +21,8 @@ ADMIN_ONLY = ("ADMIN",)
 
 
 def _sync_excel_to_db(filepath: str, filename: str, database_url: str) -> int:
-    """Insert all rows from an Excel file into ventas_raw, replacing existing data."""
+    """Insert rows from an Excel file into ventas_raw, replacing only the uploaded period.
+    Previous months are preserved so 'mes anterior' always has data."""
     import pandas as pd
     import sqlalchemy
     from sqlalchemy import text
@@ -52,9 +53,29 @@ def _sync_excel_to_db(filepath: str, filename: str, database_url: str) -> int:
     df["archivo_origen"] = filename
     df["fecha_hora"] = pd.to_datetime(df.get("fecha_hora", pd.NaT), errors="coerce")
 
+    # Determine the period (year-month) of the uploaded file
+    dates = df["fecha_hora"].dropna()
+    periodo = None
+    if len(dates) > 0:
+        latest = dates.max()
+        year, month = latest.year, latest.month
+        inicio = f"{year}-{month:02d}-01"
+        fin_year, fin_month = (year + 1, 1) if month == 12 else (year, month + 1)
+        fin = f"{fin_year}-{fin_month:02d}-01"
+        periodo = f"{year}-{month:02d}"
+
     eng = sqlalchemy.create_engine(database_url, pool_pre_ping=True)
     with eng.begin() as conn:
-        conn.execute(text("TRUNCATE TABLE ventas_raw RESTART IDENTITY"))
+        # Always replace budget rows (fecha_hora IS NULL) with the new file's budget rows
+        conn.execute(text("DELETE FROM ventas_raw WHERE fecha_hora IS NULL"))
+        if periodo:
+            # Replace only the sales rows for the same month — keep all other months intact
+            conn.execute(
+                text("DELETE FROM ventas_raw WHERE fecha_hora >= :i AND fecha_hora < :f"),
+                {"i": inicio, "f": fin},
+            )
+        else:
+            conn.execute(text("TRUNCATE TABLE ventas_raw RESTART IDENTITY"))
         df.to_sql("ventas_raw", conn, if_exists="append", index=False, method="multi", chunksize=200)
     eng.dispose()
     return len(df)
