@@ -79,7 +79,6 @@ export default function ConveniosDashboard() {
   const topAsesores: any[] = data?.top_asesores ?? []
   const evolucion: any[] = data?.evolucion_diaria ?? []
   const marcas: any[] = data?.marcas ?? []
-  const ve = data?.venta_empresa ?? {}
 
   const maxTienda = topTiendas[0]?.venta ?? 1
   const maxAsesor = topAsesores[0]?.venta ?? 1
@@ -111,12 +110,11 @@ export default function ConveniosDashboard() {
       </div>
 
       {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {[
           { label: 'Total Convenios', value: fmtM(kpis.total ?? 0), sub: `${(kpis.pct_del_total ?? 0).toFixed(1)}% del total ventas`, color: 'border-l-indigo-500' },
           { label: 'Facturas', value: (kpis.facturas ?? 0).toLocaleString('es-CO'), sub: 'documentos de venta', color: 'border-l-blue-500' },
           { label: 'Margen Convenios', value: `${(kpis.margen_pct ?? 0).toFixed(1)}%`, sub: 'utilidad neta', color: 'border-l-green-500' },
-          { label: 'Venta Empresa', value: fmtM(ve.total ?? 0), sub: `${(ve.pct_del_total ?? 0).toFixed(1)}% del total ventas`, color: 'border-l-amber-500' },
         ].map(k => (
           <div key={k.label} className={`bg-white rounded-lg shadow-sm border border-gray-100 border-l-4 ${k.color} p-4`}>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">{k.label}</p>
@@ -126,7 +124,7 @@ export default function ConveniosDashboard() {
         ))}
       </div>
 
-      {/* Por convenio + Venta empresa */}
+      {/* Por convenio */}
       <div className="flex flex-wrap gap-4 mb-6">
         {porConvenio.map(c => (
           <div key={c.nombre} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 min-w-[170px] flex-1">
@@ -139,17 +137,6 @@ export default function ConveniosDashboard() {
             <p className="text-xs text-gray-400 mt-0.5">Margen {c.margen_pct.toFixed(1)}%</p>
           </div>
         ))}
-        {ve.total > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 min-w-[170px] flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Venta Empresa</span>
-            </div>
-            <p className="text-xl font-bold text-gray-800">{fmtM(ve.total)}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{ve.pct_del_total.toFixed(1)}% del total · {ve.facturas.toLocaleString('es-CO')} fact.</p>
-            <p className="text-xs text-gray-400 mt-0.5">Margen {ve.margen_pct.toFixed(1)}%</p>
-          </div>
-        )}
       </div>
 
       {/* Top tiendas + Top asesores */}

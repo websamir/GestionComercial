@@ -1120,7 +1120,6 @@ def get_convenios_full_dashboard(df: pd.DataFrame) -> dict:
             "top_asesores": [],
             "evolucion_diaria": [],
             "marcas": [],
-            "venta_empresa": {"total": 0.0, "facturas": 0, "margen_pct": 0.0, "pct_del_total": 0.0},
         }
         return empty
 
@@ -1226,19 +1225,6 @@ def get_convenios_full_dashboard(df: pd.DataFrame) -> dict:
             for _, r in mg.iterrows()
         ]
 
-    # --- Venta empresa (Origen=CANAL) ---
-    venta_empresa: dict = {"total": 0.0, "facturas": 0, "margen_pct": 0.0, "pct_del_total": 0.0}
-    if not sdf.empty and "Origen" in sdf.columns:
-        edf = sdf[sdf["Origen"] == "CANAL"]
-        et = _safe_float(edf["Valor Ventas Netas"].sum())
-        eu = _safe_float(edf["Valor Utilidad"].sum()) if "Valor Utilidad" in edf.columns else 0.0
-        venta_empresa = {
-            "total": round(et, 2),
-            "facturas": _invoice_count(edf),
-            "margen_pct": round(_safe_pct(eu, et), 1),
-            "pct_del_total": round(_safe_pct(et, total_venta_empresa), 1),
-        }
-
     return {
         "kpis": {
             "total": round(total, 2),
@@ -1251,5 +1237,4 @@ def get_convenios_full_dashboard(df: pd.DataFrame) -> dict:
         "top_asesores": top_asesores_list,
         "evolucion_diaria": evolucion_list,
         "marcas": marcas_list,
-        "venta_empresa": venta_empresa,
     }

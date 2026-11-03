@@ -102,7 +102,10 @@ async def company_convenios_dashboard(
     fecha_inicio: Optional[date] = Query(None),
     fecha_fin: Optional[date] = Query(None),
 ):
-    df = _get_channel_df(current_user)
+    engine = get_engine()
+    if not engine.is_loaded():
+        raise HTTPException(status_code=503, detail="No hay datos cargados. Contacte al administrador.")
+    df = engine.get_df()
     df = _filter_by_dates(df, fecha_inicio, fecha_fin)
     return metrics.get_convenios_full_dashboard(df)
 
