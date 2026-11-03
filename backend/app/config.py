@@ -17,6 +17,7 @@ CORS_ORIGINS = [o.strip() for o in _cors_env.split(",") if o.strip()] if _cors_e
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
+    "https://gestion-comercial-rho.vercel.app",
 ]
 
 EXCEL_SHEET_NAME = "v_ventas_vendedores_ppto"
