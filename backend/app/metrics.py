@@ -738,9 +738,11 @@ def get_convenios_breakdown(df: pd.DataFrame) -> dict:
     mask_platam = tipo_doc.isin(["FEWC", "NCWC"])
     # DILO: FEWD (ventas) + NCWD (devoluciones)
     mask_dilo   = tipo_doc.isin(["FEWD", "NCWD"])
-    mask_vanti  = pd.Series(False, index=sdf.index)
-    # BRILLA: todos los G1A*
-    mask_brilla = tipo_doc.str.startswith("G1A")
+    # VANTI: G1A* con Bodega 35
+    bodega = sdf["Bodega"] if "Bodega" in sdf.columns else pd.Series(0, index=sdf.index)
+    mask_vanti  = tipo_doc.str.startswith("G1A") & (bodega == 35)
+    # BRILLA: G1A* con Bodega distinta de 35
+    mask_brilla = tipo_doc.str.startswith("G1A") & (bodega != 35)
 
     all_mask = mask_addi | mask_platam | mask_dilo | mask_vanti | mask_brilla
     seg_all  = sdf[all_mask]
@@ -1133,11 +1135,13 @@ def get_convenios_full_dashboard(df: pd.DataFrame) -> dict:
     # --- Por convenio ---
     tipo_doc = sdf["Tipo Documento"].astype(str).str.upper().str.strip()
     por_convenio = []
+    bodega_full = sdf["Bodega"] if "Bodega" in sdf.columns else pd.Series(0, index=sdf.index)
     for nombre, mask in [
-        ("ADDI", tipo_doc.isin(["FEWP", "NCWP"])),
+        ("ADDI",   tipo_doc.isin(["FEWP", "NCWP"])),
         ("PLATAM", tipo_doc.isin(["FEWC", "NCWC"])),
-        ("DILO", tipo_doc.isin(["FEWD", "NCWD"])),
-        ("BRILLA", tipo_doc.str.startswith("G1A")),
+        ("DILO",   tipo_doc.isin(["FEWD", "NCWD"])),
+        ("VANTI",  tipo_doc.str.startswith("G1A") & (bodega_full == 35)),
+        ("BRILLA", tipo_doc.str.startswith("G1A") & (bodega_full != 35)),
     ]:
         seg = sdf[mask]
         v = _safe_float(seg["Valor Ventas Netas"].sum())
