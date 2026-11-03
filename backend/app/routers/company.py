@@ -30,18 +30,18 @@ def _get_channel_df(current_user: Usuario):
 
 
 def _filter_by_dates(df, fecha_inicio: Optional[date], fecha_fin: Optional[date]):
-    """Filter df rows by date range on fecha_hora column."""
-    import pandas as pd
+    """Filter df rows by date range on fecha_hora column. Budget rows (fecha_hora=NaN) are always kept."""
     if "fecha_hora" not in df.columns:
         return df
     if fecha_inicio is None and fecha_fin is None:
         return df
-    mask = pd.Series([True] * len(df), index=df.index)
+    budget_mask = df["fecha_hora"].isna()
+    date_mask = ~budget_mask
     if fecha_inicio:
-        mask &= df["fecha_hora"].dt.date >= fecha_inicio
+        date_mask &= df["fecha_hora"].dt.date >= fecha_inicio
     if fecha_fin:
-        mask &= df["fecha_hora"].dt.date <= fecha_fin
-    return df[mask].copy()
+        date_mask &= df["fecha_hora"].dt.date <= fecha_fin
+    return df[budget_mask | date_mask].copy()
 
 
 @router.get("/dashboard")

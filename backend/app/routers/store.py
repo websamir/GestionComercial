@@ -30,11 +30,15 @@ def _get_store_df(current_user: Usuario):
 def _apply_date_filter(df, fecha_inicio: Optional[date], fecha_fin: Optional[date]):
     if "fecha_hora" not in df.columns:
         return df
+    if fecha_inicio is None and fecha_fin is None:
+        return df
+    budget_mask = df["fecha_hora"].isna()
+    date_mask = ~budget_mask
     if fecha_inicio:
-        df = df[df["fecha_hora"].dt.date >= fecha_inicio]
+        date_mask &= df["fecha_hora"].dt.date >= fecha_inicio
     if fecha_fin:
-        df = df[df["fecha_hora"].dt.date <= fecha_fin]
-    return df
+        date_mask &= df["fecha_hora"].dt.date <= fecha_fin
+    return df[budget_mask | date_mask].copy()
 
 
 @router.get("/dashboard")
