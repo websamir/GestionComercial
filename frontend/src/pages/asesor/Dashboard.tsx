@@ -31,19 +31,29 @@ function getCumplColor(p: number) {
   return 'text-red-500'
 }
 
-type Rango = 'hoy' | '7d' | '15d' | '30d'
+type Rango = 'hoy' | '7d' | '15d' | 'mes_actual' | 'mes_ant'
 const RANGOS: { label: string; val: Rango }[] = [
-  { label: 'Hoy',     val: 'hoy' },
-  { label: '7 días',  val: '7d' },
-  { label: '15 días', val: '15d' },
-  { label: '30 días', val: '30d' },
+  { label: 'Hoy',        val: 'hoy' },
+  { label: '7 días',     val: '7d' },
+  { label: '15 días',    val: '15d' },
+  { label: 'Mes actual', val: 'mes_actual' },
+  { label: 'Mes ant.',   val: 'mes_ant' },
 ]
 
 function getRangoDates(rango: Rango) {
   const today = new Date()
   const fmt = (d: Date) => d.toISOString().slice(0, 10)
+  if (rango === 'mes_actual') {
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
+    return { fecha_inicio: fmt(firstDay), fecha_fin: fmt(today) }
+  }
+  if (rango === 'mes_ant') {
+    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+    const lastDay = new Date(today.getFullYear(), today.getMonth(), 0)
+    return { fecha_inicio: fmt(firstDay), fecha_fin: fmt(lastDay) }
+  }
   const fin = fmt(today)
-  const dias = rango === 'hoy' ? 0 : rango === '7d' ? 6 : rango === '15d' ? 14 : 29
+  const dias = rango === 'hoy' ? 0 : rango === '7d' ? 6 : 14
   const inicio = new Date(today)
   inicio.setDate(today.getDate() - dias)
   return { fecha_inicio: fmt(inicio), fecha_fin: fin }
@@ -179,7 +189,7 @@ function CustomTooltip({ active, payload, label }: any) {
 export default function AsesorDashboard() {
   const { user } = useAuthStore()
   const [periodo] = useState(getCurrentPeriodo())
-  const [rango, setRango] = useState<Rango>('30d')
+  const [rango, setRango] = useState<Rango>('mes_actual')
   const [data, setData] = useState<AsesorDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -249,7 +259,7 @@ export default function AsesorDashboard() {
               <p className="text-xs font-semibold uppercase tracking-widest text-white/50 mb-1">Vista general</p>
               <h1 className="text-2xl font-bold text-white leading-tight">¡Hola, {data.asesor.nombre ?? user?.nombre}!</h1>
               <p className="text-sm text-white/60 mt-0.5">
-                Cód. {data.asesor.cod_vend} · {data.asesor.tienda} · {rango === 'hoy' ? 'Datos de hoy' : `Últimos ${rango === '7d' ? '7' : rango === '15d' ? '15' : '30'} días`}
+                Cód. {data.asesor.cod_vend} · {data.asesor.tienda} · {rango === 'hoy' ? 'Datos de hoy' : rango === 'mes_actual' ? 'Mes actual' : rango === 'mes_ant' ? 'Mes anterior completo' : `Últimos ${rango === '7d' ? '7' : '15'} días`}
               </p>
               {syncedAt && <p className="text-blue-400/70 text-xs mt-0.5">Actualizado el {syncedAt}</p>}
             </div>
