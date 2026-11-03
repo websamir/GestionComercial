@@ -12,13 +12,15 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./invesakk.db")
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-_cors_env = os.getenv("CORS_ORIGINS", "")
-CORS_ORIGINS = [o.strip() for o in _cors_env.split(",") if o.strip()] if _cors_env else [
+_cors_always = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
     "https://gestion-comercial-rho.vercel.app",
 ]
+_cors_env = os.getenv("CORS_ORIGINS", "")
+_cors_extra = [o.strip() for o in _cors_env.split(",") if o.strip()]
+CORS_ORIGINS = list(set(_cors_always + _cors_extra))
 
 EXCEL_SHEET_NAME = "v_ventas_vendedores_ppto"
 
